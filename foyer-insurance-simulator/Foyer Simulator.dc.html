@@ -206,6 +206,14 @@
   .section-title{font-size:13px;font-weight:600;color:var(--text-dim);margin:22px 0 10px;text-transform:uppercase;letter-spacing:.03em;}
   .section-title:first-child{margin-top:0;}
 
+  .candidate-card{
+    border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:20px;
+    margin-top:16px;background:var(--surface-2);
+  }
+  .rank-pill{
+    font-size:11px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;
+    align-self:center;
+  }
   .community-box{
     background:var(--surface-2);border:1px solid var(--border-soft);border-radius:var(--radius-sm);
     padding:16px;margin:16px 0;
@@ -518,11 +526,27 @@
       if (b.gate.score !== a.gate.score) return b.gate.score - a.gate.score;
       return b.reimbursement - a.reimbursement;
     });
-    var best = candidates[0];
-    var sameInsurer = candidates.filter(function(c){ return c.insurerId === best.insurerId; });
-    sameInsurer.sort(function(a, b){ return a.tierIndex - b.tierIndex; });
 
-    return { best: best, tiers: sameInsurer, band: band, age: age, fullMatch: best.passes };
+    // Reduce to each insurer's single best-matching tier, then rank
+    // insurers against each other — three DIFFERENT companies to compare
+    // real quotes across, rather than three tiers of the same one.
+    var bestPerInsurer = {};
+    candidates.forEach(function(c){
+      var incumbent = bestPerInsurer[c.insurerId];
+      if (!incumbent) { bestPerInsurer[c.insurerId] = c; return; }
+      if (c.gate.score > incumbent.gate.score || (c.gate.score === incumbent.gate.score && c.reimbursement > incumbent.reimbursement)){
+        bestPerInsurer[c.insurerId] = c;
+      }
+    });
+    var rankedInsurers = INSURERS.map(function(i){ return bestPerInsurer[i.id]; }).filter(Boolean);
+    rankedInsurers.sort(function(a, b){
+      if (b.gate.score !== a.gate.score) return b.gate.score - a.gate.score;
+      return b.reimbursement - a.reimbursement;
+    });
+    var top3 = rankedInsurers.slice(0, 3);
+    var best = top3[0];
+
+    return { best: best, top3: top3, band: band, age: age, fullMatch: best.passes };
   }
 
   /* ------------------------- community pricing (Drive) -------------------------
@@ -687,7 +711,18 @@
       gymSpend: 0, glassesSpend: 0, dentalNeed: "none", altMedSpend: 0,
       comfortPref: "general", pregnancy: false, travelFrequency: "rarely"
     };
-    if (!state.quoteForm[id]) state.quoteForm[id] = { insurerId: "", tier: "", premium: "", status: "idle", errorCode: "" };
+    if (!state.quoteForm[id]) state.quoteForm[id] = {};
+  }
+
+  // Quote-form state is member -> insurerId -> entry, since each of the
+  // top-3 candidate cards (possibly 3 different insurers) needs its own
+  // independent save form.
+  function ensureQuoteFormEntry(memberId, insurerId, defaultTier){
+    if (!state.quoteForm[memberId]) state.quoteForm[memberId] = {};
+    if (!state.quoteForm[memberId][insurerId]){
+      state.quoteForm[memberId][insurerId] = { tier: defaultTier, premium: "", status: "idle", errorCode: "" };
+    }
+    return state.quoteForm[memberId][insurerId];
   }
 
   function ensureCommunityLoaded(insurerId){
@@ -1039,53 +1074,24 @@
   }
 
   function renderPersonResult(r){
-    var m = r.member, rec = r.rec, best = rec.best;
+    var m = r.member, rec = r.rec;
     var age = rec.age;
     var ageStr = age === null ? "" : (age + "y · " + rec.band);
     var h = state.household;
-
-    var breakdownChips = [];
-    if (best.breakdown.altMed > 0) breakdownChips.push(["Alt. medicine", best.breakdown.altMed]);
-    if (best.breakdown.dental > 0) breakdownChips.push(["Dental", best.breakdown.dental]);
-    if (best.breakdown.glasses > 0) breakdownChips.push(["Glasses", best.breakdown.glasses]);
-    if (best.breakdown.gym > 0) breakdownChips.push(["Gym/fitness", best.breakdown.gym]);
-    if (best.breakdown.maternity > 0) breakdownChips.push(["Maternity", best.breakdown.maternity]);
-    var chipsHtml = breakdownChips.length
-      ? '<div class="breakdown-list">' + breakdownChips.map(function(c){
-          return '<span class="chip">' + c[0] + ' <b>' + chf(c[1]) + '/yr</b></span>';
-        }).join("") + '</div>'
-      : '<div class="helptext" style="margin:10px 0;">No specific ambulatory needs entered — this reflects a baseline match.</div>';
+    var region = regionFromPostal(h.postalCode);
 
     var detailsBits = [];
     if (m.birthDate) detailsBits.push("born " + m.birthDate);
     if (m.sex) detailsBits.push(m.sex === "f" ? "female" : "male");
     if (h.postalCode) detailsBits.push("NPA " + h.postalCode);
     var quoteDetailsHtml = detailsBits.length
-      ? '<div class="helptext" style="margin:2px 0 14px;">For the calculator: ' + esc(detailsBits.join(", ")) + '</div>'
+      ? '<div class="helptext" style="margin:2px 0 14px;">For each insurer\'s own calculator: ' + esc(detailsBits.join(", ")) + '</div>'
       : "";
 
-    var sourceNote = best.insurerSourced
-      ? '<span class="helptext">Sourced from ' + esc(best.insurerSourceLabel) + '.</span>'
-      : '<span class="helptext" style="color:var(--warn);">Estimated, unverified — ' + esc(best.insurerSourceLabel) + '</span>';
-
-    var mismatchHtml = "";
-    if (!rec.fullMatch){
-      var memberNeeds = state.needs[m.id];
-      var unmet = [];
-      if (!best.gate.dentalOk) unmet.push("major dental work (dental and hospital-comfort riders are separate purchases at every insurer here)");
-      if (!best.gate.comfortOk) unmet.push("a " + memberNeeds.comfortPref + " ward");
-      mismatchHtml = (
-        '<div class="disclaimer" style="margin-bottom:14px;">' +
-          '<span class="ico">&#9888;</span>' +
-          '<span>No single plan on file fully covers everything requested here — this is the closest match, but it doesn\'t cover ' +
-          esc(unmet.join(" and ")) + '. You\'d likely need to combine this with a separate rider (e.g. a dental plan or a hospital-comfort upgrade) to get full coverage.</span>' +
-        '</div>'
-      );
-    }
-
-    var tierTableRows = buildTierTable(rec.tiers, best.tierIndex);
-    var region = regionFromPostal(h.postalCode);
-    var communityHtml = renderCommunityBox(m, rec, region);
+    var comparisonRows = buildTierTable(rec.top3, 0);
+    var candidatesHtml = rec.top3.map(function(candidate, idx){
+      return renderCandidateCard(m, candidate, idx, rec.band, region);
+    }).join("");
 
     return (
       '<div class="person-result">' +
@@ -1094,31 +1100,79 @@
             '<div class="person-name">' + esc(m.name || "Household member") + '</div>' +
             '<div class="person-meta">' + esc(ageStr) + '</div>' +
           '</div>' +
-          '<div class="rec-badge">' + esc(best.insurerName) + ' — ' + esc(best.planName) + (best.insurerSourced ? "" : " (estimated)") + '</div>' +
         '</div>' +
 
-        mismatchHtml +
-
-        '<div class="metric-row" style="grid-template-columns:1fr;">' +
-          '<div class="metric"><div class="k">Est. annual reimbursement for your stated needs</div><div class="v" style="color:var(--success)">' + chf(best.reimbursement) + '</div></div>' +
-        '</div>' +
-
-        chipsHtml +
         quoteDetailsHtml +
-        '<div style="margin-bottom:10px;">' + sourceNote + '</div>' +
 
         '<div class="tier-table-wrap">' +
           '<table class="tier-table">' +
             '<thead><tr>' +
               '<th>Coverage</th>' +
-              tierTableRows.headerCells +
+              comparisonRows.headerCells +
             '</tr></thead>' +
-            '<tbody>' + tierTableRows.bodyRows + '</tbody>' +
+            '<tbody>' + comparisonRows.bodyRows + '</tbody>' +
           '</table>' +
         '</div>' +
 
-        '<a class="quote-link" href="' + best.insurerUrl + '" target="_blank" rel="noopener noreferrer">' +
-          'Get your exact premium on ' + esc(best.insurerName) + '\'s calculator →' +
+        candidatesHtml +
+      '</div>'
+    );
+  }
+
+  function renderCandidateCard(m, candidate, idx, band, region){
+    var rankLabel = idx === 0 ? "#1 · Best match" : (idx === 1 ? "#2" : "#3");
+
+    var breakdownChips = [];
+    if (candidate.breakdown.altMed > 0) breakdownChips.push(["Alt. medicine", candidate.breakdown.altMed]);
+    if (candidate.breakdown.dental > 0) breakdownChips.push(["Dental", candidate.breakdown.dental]);
+    if (candidate.breakdown.glasses > 0) breakdownChips.push(["Glasses", candidate.breakdown.glasses]);
+    if (candidate.breakdown.gym > 0) breakdownChips.push(["Gym/fitness", candidate.breakdown.gym]);
+    if (candidate.breakdown.maternity > 0) breakdownChips.push(["Maternity", candidate.breakdown.maternity]);
+    var chipsHtml = breakdownChips.length
+      ? '<div class="breakdown-list">' + breakdownChips.map(function(c){
+          return '<span class="chip">' + c[0] + ' <b>' + chf(c[1]) + '/yr</b></span>';
+        }).join("") + '</div>'
+      : '<div class="helptext" style="margin:10px 0;">No specific ambulatory needs entered — this reflects a baseline match.</div>';
+
+    var sourceNote = candidate.insurerSourced
+      ? '<span class="helptext">Sourced from ' + esc(candidate.insurerSourceLabel) + '.</span>'
+      : '<span class="helptext" style="color:var(--warn);">Estimated, unverified — ' + esc(candidate.insurerSourceLabel) + '</span>';
+
+    var mismatchHtml = "";
+    if (!candidate.passes){
+      var memberNeeds = state.needs[m.id];
+      var unmet = [];
+      if (!candidate.gate.dentalOk) unmet.push("major dental work (dental and hospital-comfort riders are separate purchases at every insurer here)");
+      if (!candidate.gate.comfortOk) unmet.push("a " + memberNeeds.comfortPref + " ward");
+      mismatchHtml = (
+        '<div class="disclaimer" style="margin-bottom:14px;">' +
+          '<span class="ico">&#9888;</span>' +
+          '<span>This plan doesn\'t cover ' + esc(unmet.join(" and ")) +
+          '. You\'d likely need to combine it with a separate rider (e.g. a dental plan or a hospital-comfort upgrade) to get full coverage.</span>' +
+        '</div>'
+      );
+    }
+
+    var communityHtml = renderCommunityBox(m, candidate, band, region);
+
+    return (
+      '<div class="candidate-card">' +
+        '<div class="person-result-head">' +
+          '<span class="rank-pill">' + rankLabel + '</span>' +
+          '<div class="rec-badge">' + esc(candidate.insurerName) + ' — ' + esc(candidate.planName) + (candidate.insurerSourced ? "" : " (estimated)") + '</div>' +
+        '</div>' +
+
+        mismatchHtml +
+
+        '<div class="metric-row" style="grid-template-columns:1fr;">' +
+          '<div class="metric"><div class="k">Est. annual reimbursement for your stated needs</div><div class="v" style="color:var(--success)">' + chf(candidate.reimbursement) + '</div></div>' +
+        '</div>' +
+
+        chipsHtml +
+        '<div style="margin-bottom:10px;">' + sourceNote + '</div>' +
+
+        '<a class="quote-link" href="' + candidate.insurerUrl + '" target="_blank" rel="noopener noreferrer">' +
+          'Get your exact premium on ' + esc(candidate.insurerName) + '\'s calculator →' +
         '</a>' +
 
         communityHtml +
@@ -1147,9 +1201,9 @@
     return DRIVE_ERROR_COPY[code] || "Couldn't reach Google Drive right now.";
   }
 
-  function renderCommunityBox(m, rec, region){
-    var qf = state.quoteForm[m.id];
-    if (!qf.insurerId){ qf.insurerId = rec.best.insurerId; qf.tier = rec.best.tierLabel; }
+  function renderCommunityBox(m, candidate, band, region){
+    var insurerId = candidate.insurerId;
+    var qf = ensureQuoteFormEntry(m.id, insurerId, candidate.tierLabel);
 
     if (!mcpAvailable()){
       return (
@@ -1160,15 +1214,12 @@
       );
     }
 
-    ensureCommunityLoaded(qf.insurerId);
-    var community = state.community[qf.insurerId] || { status: "idle", rows: [] };
-    var insurer = INSURERS.filter(function(i){ return i.id === qf.insurerId; })[0];
+    ensureCommunityLoaded(insurerId);
+    var community = state.community[insurerId] || { status: "idle", rows: [] };
+    var insurer = INSURERS.filter(function(i){ return i.id === insurerId; })[0];
     var tierOptions = insurer ? insurer.tiers.map(function(t){
       return '<option value="' + esc(t.tier) + '" ' + (qf.tier === t.tier ? "selected" : "") + '>' + esc(t.planName) + '</option>';
     }).join("") : "";
-    var insurerOptions = INSURERS.map(function(i){
-      return '<option value="' + i.id + '" ' + (qf.insurerId === i.id ? "selected" : "") + '>' + esc(i.name) + '</option>';
-    }).join("");
 
     var prelimHtml = "";
     if (community.status === "loading"){
@@ -1176,11 +1227,11 @@
     } else if (community.status === "error"){
       prelimHtml = '<div class="status-msg err">' + esc(driveErrorMessage(community.errorCode)) + '</div>';
     } else if (community.status === "loaded"){
-      var tierData = findTierData(qf.insurerId, qf.tier);
+      var tierData = findTierData(insurerId, qf.tier);
       var bucketRows = region ? community.rows.filter(function(r){
-        return r.insurerId === qf.insurerId && r.tier === qf.tier && r.ageBand === rec.band && r.region === region;
+        return r.insurerId === insurerId && r.tier === qf.tier && r.ageBand === band && r.region === region;
       }) : [];
-      var prelim = region ? computePreliminary(community.rows, qf.insurerId, qf.tier, rec.band, region) : null;
+      var prelim = region ? computePreliminary(community.rows, insurerId, qf.tier, band, region) : null;
       if (prelim && tierData){
         var reimbAtTier = computeReimbursement(state.needs[m.id], tierData).total;
         var annualPremium = prelim.median * 12;
@@ -1207,22 +1258,18 @@
       '<div class="community-box">' +
         '<h4>Community-sourced pricing</h4>' +
         prelimHtml +
-        '<div class="section-title" style="margin:16px 0 8px;">Report your real quote</div>' +
-        '<div class="row3">' +
-          '<div class="field" style="margin-bottom:8px;">' +
-            '<label>Insurer</label>' +
-            '<select data-action="quote-insurer" data-id="' + m.id + '">' + insurerOptions + '</select>' +
-          '</div>' +
+        '<div class="section-title" style="margin:16px 0 8px;">Report your real quote for ' + esc(insurer ? insurer.name : insurerId) + '</div>' +
+        '<div class="row2">' +
           '<div class="field" style="margin-bottom:8px;">' +
             '<label>Plan</label>' +
-            '<select data-action="quote-tier" data-id="' + m.id + '">' + tierOptions + '</select>' +
+            '<select data-action="quote-tier" data-id="' + m.id + '" data-insurer="' + insurerId + '">' + tierOptions + '</select>' +
           '</div>' +
           '<div class="field" style="margin-bottom:8px;">' +
             '<label>Monthly premium (CHF)</label>' +
-            '<input type="text" inputmode="decimal" placeholder="e.g. 62.40" value="' + esc(qf.premium) + '" data-action="quote-premium" data-id="' + m.id + '" />' +
+            '<input type="text" inputmode="decimal" placeholder="e.g. 62.40" value="' + esc(qf.premium) + '" data-action="quote-premium" data-id="' + m.id + '" data-insurer="' + insurerId + '" />' +
           '</div>' +
         '</div>' +
-        '<button class="btn btn-primary btn-sm" data-action="quote-save" data-id="' + m.id + '" ' + (qf.premium && qf.status !== "saving" ? "" : "disabled") + '>Save quote</button>' +
+        '<button class="btn btn-primary btn-sm" data-action="quote-save" data-id="' + m.id + '" data-insurer="' + insurerId + '" ' + (qf.premium && qf.status !== "saving" ? "" : "disabled") + '>Save quote</button>' +
         statusHtml +
       '</div>'
     );
@@ -1237,7 +1284,7 @@
       var hl = i === recommendedIdx ? "tier-col-highlight" : "";
       return (
         '<th class="' + hl + '">' +
-          '<span class="tier-name">' + esc(t.planName) + '</span>' +
+          '<span class="tier-name">' + esc(t.insurerName) + ' — ' + esc(t.planName) + '</span>' +
           (i === recommendedIdx ? '<span class="tier-recommended-tag">BEST MATCH</span>' : "") +
         '</th>'
       );
@@ -1412,21 +1459,11 @@
         render();
       });
     });
-    app.querySelectorAll('[data-action="quote-insurer"]').forEach(function(el){
-      el.addEventListener("change", function(){
-        var id = el.getAttribute("data-id");
-        var qf = state.quoteForm[id];
-        qf.insurerId = el.value;
-        var insurer = INSURERS.filter(function(i){ return i.id === qf.insurerId; })[0];
-        qf.tier = insurer ? insurer.tiers[0].tier : "";
-        render();
-      });
-    });
-
     app.querySelectorAll('[data-action="quote-tier"]').forEach(function(el){
       el.addEventListener("change", function(){
         var id = el.getAttribute("data-id");
-        state.quoteForm[id].tier = el.value;
+        var insurerId = el.getAttribute("data-insurer");
+        state.quoteForm[id][insurerId].tier = el.value;
         render();
       });
     });
@@ -1434,30 +1471,32 @@
     app.querySelectorAll('[data-action="quote-premium"]').forEach(function(el){
       el.addEventListener("input", function(){
         var id = el.getAttribute("data-id");
-        state.quoteForm[id].premium = sanitizeDecimal(el.value);
+        var insurerId = el.getAttribute("data-insurer");
+        state.quoteForm[id][insurerId].premium = sanitizeDecimal(el.value);
         render();
-        focusEl('[data-action="quote-premium"][data-id="' + id + '"]', true);
+        focusEl('[data-action="quote-premium"][data-id="' + id + '"][data-insurer="' + insurerId + '"]', true);
       });
     });
 
     app.querySelectorAll('[data-action="quote-save"]').forEach(function(el){
       el.addEventListener("click", function(){
         var id = el.getAttribute("data-id");
-        var qf = state.quoteForm[id];
+        var insurerId = el.getAttribute("data-insurer");
+        var qf = state.quoteForm[id][insurerId];
         var m = findMember(id);
         var premiumNum = parseFloat(qf.premium);
-        if (!m || !qf.insurerId || !qf.tier || isNaN(premiumNum) || premiumNum <= 0) return;
+        if (!m || !qf.tier || isNaN(premiumNum) || premiumNum <= 0) return;
         var age = computeAge(m.birthDate);
         var band = ageBand(age);
         var region = regionFromPostal(state.household.postalCode);
         qf.status = "saving";
         qf.errorCode = "";
         render();
-        saveQuoteRow(qf.insurerId, {
+        saveQuoteRow(insurerId, {
           timestamp: new Date().toISOString(),
-          insurerId: qf.insurerId,
+          insurerId: insurerId,
           tier: qf.tier,
-          planName: (findTierData(qf.insurerId, qf.tier) || {}).planName || "",
+          planName: (findTierData(insurerId, qf.tier) || {}).planName || "",
           ageBand: band,
           sex: m.sex,
           region: region,
@@ -1465,7 +1504,7 @@
           monthlyPremiumCHF: premiumNum
         }).then(function(rows){
           qf.status = "saved";
-          if (state.community[qf.insurerId]) state.community[qf.insurerId].rows = rows;
+          if (state.community[insurerId]) state.community[insurerId].rows = rows;
           render();
         }).catch(function(err){
           qf.status = "error";
