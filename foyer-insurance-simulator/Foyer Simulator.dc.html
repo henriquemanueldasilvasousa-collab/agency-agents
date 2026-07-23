@@ -801,6 +801,18 @@
       return '<option value="' + ins.id + '" ' + (c.insurerId === ins.id ? "selected" : "") + '>' + ins.name + '</option>';
     }).join("") + '<option value="other" ' + (c.insurerId === "other" ? "selected" : "") + '>Other / not sure</option>';
 
+    var knownInsurer = INSURERS.filter(function(i){ return i.id === c.insurerId; })[0];
+    var planFieldHtml = knownInsurer
+      ? (
+          '<select data-action="cov-plan" data-id="' + m.id + '">' +
+            '<option value="">Select plan…</option>' +
+            knownInsurer.tiers.map(function(t){
+              return '<option value="' + esc(t.planName) + '" ' + (c.planName === t.planName ? "selected" : "") + '>' + esc(t.tier) + ' — ' + esc(t.planName) + '</option>';
+            }).join("") +
+          '</select>'
+        )
+      : '<input type="text" placeholder="e.g. COMPLETA" value="' + esc(c.planName) + '" data-action="cov-plan" data-id="' + m.id + '" />';
+
     return (
       '<div class="card">' +
         '<h2>Current coverage</h2>' +
@@ -818,7 +830,7 @@
             '</div>' +
             '<div class="field">' +
               '<label>Plan name</label>' +
-              '<input type="text" placeholder="e.g. COMPLETA" value="' + esc(c.planName) + '" data-action="cov-plan" data-id="' + m.id + '" />' +
+              planFieldHtml +
             '</div>' +
             '<div class="field">' +
               '<label>Monthly premium (CHF)</label>' +
@@ -1300,8 +1312,16 @@
       });
     });
 
-    bindTextInput("cov-insurer", function(id, val){ state.coverage[id].insurerId = val; }, "change");
+    app.querySelectorAll('[data-action="cov-insurer"]').forEach(function(el){
+      el.addEventListener("change", function(){
+        var id = el.getAttribute("data-id");
+        state.coverage[id].insurerId = el.value;
+        state.coverage[id].planName = "";
+        render();
+      });
+    });
     bindTextInput("cov-plan", function(id, val){ state.coverage[id].planName = val; }, "input");
+    bindTextInput("cov-plan", function(id, val){ state.coverage[id].planName = val; }, "change");
     bindTextInput("cov-premium", function(id, val){ state.coverage[id].monthlyPremium = val; }, "input");
 
     app.querySelectorAll('[data-action="need-pregnancy"]').forEach(function(el){
