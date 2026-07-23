@@ -409,7 +409,7 @@
   /* -------------------------------- state -------------------------------- */
 
   function newMember(name){
-    return { id: uid(), name: name || "", birthDate: "" };
+    return { id: uid(), name: name || "", birthDate: "", sex: "" };
   }
 
   function defaultState(){
@@ -498,7 +498,7 @@
     var h = state.household;
     if (!/^\d{4}$/.test(h.postalCode)) return false;
     if (h.members.length === 0) return false;
-    return h.members.every(function(m){ return m.name.trim().length > 0 && m.birthDate; });
+    return h.members.every(function(m){ return m.name.trim().length > 0 && m.birthDate && m.sex; });
   }
 
   function renderStep1(){
@@ -507,10 +507,13 @@
       var removeBtn = h.members.length > 1
         ? '<button class="remove-btn" data-action="remove-member" data-id="' + m.id + '">Remove</button>'
         : "";
+      var sexOptions = [["", "Select…"], ["f", "Female"], ["m", "Male"]].map(function(o){
+        return '<option value="' + o[0] + '" ' + (m.sex === o[0] ? "selected" : "") + '>' + o[1] + '</option>';
+      }).join("");
       return (
         '<div class="member-card">' +
           removeBtn +
-          '<div class="row2">' +
+          '<div class="row3">' +
             '<div class="field">' +
               '<label>Full name</label>' +
               '<input type="text" placeholder="e.g. Alex Meier" value="' + esc(m.name) + '" data-action="member-name" data-id="' + m.id + '" />' +
@@ -518,6 +521,11 @@
             '<div class="field">' +
               '<label>Date of birth</label>' +
               '<input type="date" value="' + esc(m.birthDate) + '" max="' + todayISO() + '" data-action="member-birthdate" data-id="' + m.id + '" />' +
+            '</div>' +
+            '<div class="field">' +
+              '<label>Sex</label>' +
+              '<select data-action="member-sex" data-id="' + m.id + '">' + sexOptions + '</select>' +
+              '<div class="helptext">Required by insurers\' own premium calculators.</div>' +
             '</div>' +
           '</div>' +
         '</div>'
@@ -527,7 +535,7 @@
     return (
       '<div class="card">' +
         '<h2>Your household</h2>' +
-        '<p class="lede">Everyone at the same address shares one postal code. Add each household member you want to cover.</p>' +
+        '<p class="lede">Everyone at the same address shares one postal code. We\'ll use name, date of birth and sex to open each insurer\'s real calculator pre-filled, so the quote you see is theirs, not an estimate.</p>' +
         '<div class="field" style="max-width:200px;">' +
           '<label>Postal code (NPA)</label>' +
           '<input type="text" inputmode="numeric" maxlength="4" placeholder="1000" value="' + esc(h.postalCode) + '" data-action="postal-code" />' +
@@ -893,6 +901,15 @@
         var id = el.getAttribute("data-id");
         var m = findMember(id);
         if (m) m.birthDate = el.value;
+        render();
+      });
+    });
+
+    app.querySelectorAll('[data-action="member-sex"]').forEach(function(el){
+      el.addEventListener("change", function(){
+        var id = el.getAttribute("data-id");
+        var m = findMember(id);
+        if (m) m.sex = el.value;
         render();
       });
     });
