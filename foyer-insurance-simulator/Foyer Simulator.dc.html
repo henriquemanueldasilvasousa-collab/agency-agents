@@ -1,0 +1,1013 @@
+<title>Foyer — Complementary Insurance Simulator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#0a0a0f;
+    --bg-2:#0f0f17;
+    --surface:#14141c;
+    --surface-2:#1b1b26;
+    --border:#282836;
+    --border-soft:#1f1f2b;
+    --text:#f1f1f6;
+    --text-dim:#9a9aae;
+    --text-faint:#65657a;
+    --accent:#7c6cf6;
+    --accent-2:#a78bfa;
+    --accent-soft:rgba(124,108,246,0.14);
+    --success:#4ade80;
+    --warn:#fbbf24;
+    --danger:#f87171;
+    --radius:14px;
+    --radius-sm:9px;
+    font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1100px 600px at 15% -10%, rgba(124,108,246,0.16), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(74,222,128,0.07), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:920px;margin:0 auto;padding:40px 20px 80px;}
+
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+  .brand-mark{
+    width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(135deg,var(--accent),#4f46e5);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:15px;color:white;flex-shrink:0;
+  }
+  .brand-name{font-weight:600;font-size:17px;letter-spacing:-0.01em;}
+  .brand-sub{color:var(--text-faint);font-size:12.5px;}
+
+  .stepper{display:flex;gap:6px;margin-bottom:32px;}
+  .step-pill{
+    flex:1;height:4px;border-radius:99px;background:var(--border);overflow:hidden;position:relative;
+  }
+  .step-pill.done, .step-pill.active{background:var(--accent);}
+  .step-labels{display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--text-faint);}
+  .step-labels span{flex:1;text-align:center;}
+  .step-labels span:first-child{text-align:left;}
+  .step-labels span:last-child{text-align:right;}
+  .step-labels span.current{color:var(--accent-2);font-weight:600;}
+
+  .card{
+    background:linear-gradient(180deg, var(--surface), var(--bg-2));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:28px;
+    margin-bottom:20px;
+  }
+  .card h2{margin:0 0 6px;font-size:20px;letter-spacing:-0.01em;}
+  .card .lede{color:var(--text-dim);font-size:13.5px;margin:0 0 22px;}
+
+  label{display:block;font-size:12.5px;color:var(--text-dim);margin-bottom:6px;font-weight:500;}
+  input[type=text], input[type=date], input[type=number], select{
+    width:100%;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:var(--radius-sm);
+    padding:10px 12px;
+    font-size:14px;
+    outline:none;
+    transition:border-color .15s;
+  }
+  input:focus, select:focus{border-color:var(--accent);}
+  input::placeholder{color:var(--text-faint);}
+  .field{margin-bottom:16px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  @media (max-width:640px){.row2,.row3{grid-template-columns:1fr;}}
+
+  .member-card{
+    background:var(--surface-2);
+    border:1px solid var(--border-soft);
+    border-radius:var(--radius-sm);
+    padding:18px;
+    margin-bottom:14px;
+    position:relative;
+  }
+  .member-card .remove-btn{
+    position:absolute;top:14px;right:14px;
+    background:none;border:none;color:var(--text-faint);
+    cursor:pointer;font-size:12px;padding:4px 8px;border-radius:6px;
+  }
+  .member-card .remove-btn:hover{color:var(--danger);background:rgba(248,113,113,0.1);}
+
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;justify-content:center;
+    border-radius:10px;padding:11px 20px;font-size:14px;font-weight:600;
+    cursor:pointer;border:1px solid transparent;transition:all .15s;
+  }
+  .btn-primary{background:var(--accent);color:white;}
+  .btn-primary:hover{background:#6b5aef;}
+  .btn-primary:disabled{background:var(--surface-2);color:var(--text-faint);cursor:not-allowed;}
+  .btn-ghost{background:transparent;color:var(--text-dim);border-color:var(--border);}
+  .btn-ghost:hover{color:var(--text);border-color:var(--accent);}
+  .btn-add{
+    width:100%;background:transparent;border:1.5px dashed var(--border);color:var(--text-dim);
+    padding:12px;border-radius:var(--radius-sm);cursor:pointer;font-size:13.5px;font-weight:500;
+  }
+  .btn-add:hover{border-color:var(--accent);color:var(--accent-2);}
+
+  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+
+  .tabbar{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+  .tab{
+    padding:8px 14px;border-radius:99px;font-size:13px;cursor:pointer;
+    border:1px solid var(--border);color:var(--text-dim);background:var(--surface-2);
+  }
+  .tab.active{border-color:var(--accent);color:white;background:var(--accent-soft);}
+
+  .toggle-row{display:flex;gap:10px;}
+  .toggle-btn{
+    flex:1;padding:10px;border-radius:var(--radius-sm);text-align:center;font-size:13.5px;font-weight:500;
+    border:1px solid var(--border);color:var(--text-dim);background:var(--surface-2);cursor:pointer;
+  }
+  .toggle-btn.active{border-color:var(--accent);color:white;background:var(--accent-soft);}
+
+  .disclaimer{
+    background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.28);
+    border-radius:var(--radius-sm);padding:12px 14px;font-size:12.5px;color:#f3d489;
+    margin-bottom:20px;display:flex;gap:10px;align-items:flex-start;
+  }
+  .disclaimer .ico{flex-shrink:0;font-size:14px;}
+
+  .summary-strip{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px;
+  }
+  @media (max-width:640px){.summary-strip{grid-template-columns:1fr;}}
+  .summary-tile{
+    background:var(--surface-2);border:1px solid var(--border-soft);border-radius:var(--radius-sm);
+    padding:16px;
+  }
+  .summary-tile .label{font-size:11.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+  .summary-tile .value{font-size:22px;font-weight:700;letter-spacing:-0.02em;}
+  .summary-tile .value.good{color:var(--success);}
+
+  .person-result{
+    border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:18px;
+    background:linear-gradient(180deg, var(--surface), var(--bg-2));
+  }
+  .person-result-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+  .person-name{font-size:16px;font-weight:600;}
+  .person-meta{font-size:12px;color:var(--text-faint);}
+  .rec-badge{
+    display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent-2);
+    padding:6px 12px;border-radius:99px;font-size:12.5px;font-weight:600;border:1px solid rgba(124,108,246,0.3);
+  }
+
+  .metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;}
+  @media (max-width:640px){.metric-row{grid-template-columns:1fr 1fr;}}
+  .metric{background:var(--surface-2);border-radius:var(--radius-sm);padding:12px 14px;}
+  .metric .k{font-size:11px;color:var(--text-faint);margin-bottom:4px;}
+  .metric .v{font-size:16px;font-weight:700;}
+
+  .breakdown-list{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;}
+  .chip{
+    font-size:12px;background:var(--surface-2);border:1px solid var(--border-soft);
+    padding:5px 10px;border-radius:99px;color:var(--text-dim);
+  }
+  .chip b{color:var(--text);}
+
+  .savings-note{font-size:13px;padding:10px 12px;border-radius:var(--radius-sm);margin:10px 0;}
+  .savings-note.pos{background:rgba(74,222,128,0.08);color:var(--success);border:1px solid rgba(74,222,128,0.25);}
+  .savings-note.neg{background:rgba(248,113,113,0.08);color:var(--danger);border:1px solid rgba(248,113,113,0.25);}
+
+  table.tier-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;}
+  table.tier-table th, table.tier-table td{
+    text-align:left;padding:10px 12px;border-bottom:1px solid var(--border-soft);
+  }
+  table.tier-table th{color:var(--text-faint);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;}
+  table.tier-table td.tier-col-highlight, table.tier-table th.tier-col-highlight{
+    background:var(--accent-soft);
+  }
+  .tier-table-wrap{overflow-x:auto;}
+  .tier-name{font-weight:600;}
+  .tier-recommended-tag{font-size:10px;color:var(--accent-2);display:block;font-weight:600;margin-top:2px;}
+
+  .quote-link{
+    display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--accent-2);
+    text-decoration:none;margin-top:14px;font-weight:600;
+  }
+  .quote-link:hover{text-decoration:underline;}
+
+  .restart-row{text-align:center;margin-top:28px;}
+  .restart-row button{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;text-decoration:underline;}
+
+  .helptext{font-size:11.5px;color:var(--text-faint);margin-top:4px;}
+  .section-title{font-size:13px;font-weight:600;color:var(--text-dim);margin:22px 0 10px;text-transform:uppercase;letter-spacing:.03em;}
+  .section-title:first-child{margin-top:0;}
+</style>
+
+<div id="app"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------------------------------------------------------------
+   * DATA — reimbursement rules and premiums below are ILLUSTRATIVE
+   * ESTIMATES for simulation purposes. They are not sourced from verified
+   * insurer contract fiches (IPID). See scratch/gm-fiche.txt and
+   * scratch/swica.txt for what's been researched so far and what's left
+   * to extract from real PDFs.
+   * ------------------------------------------------------------------- */
+
+  var BASE_TIERS = [
+    {
+      tier: "Essential",
+      altMed: { percent: 75, cap: 1000 },
+      dental: { percent: 0, cap: 0 },
+      glasses: { amount: 150, periodYears: 2 },
+      gym: { cap: 150 },
+      maternity: { amount: 150 },
+      hospitalComfort: "general",
+      travel: true,
+      basePremium: { child: 18, adult: 30, senior: 42 }
+    },
+    {
+      tier: "Balanced",
+      altMed: { percent: 90, cap: 2000 },
+      dental: { percent: 75, cap: 2000 },
+      glasses: { amount: 300, periodYears: 2 },
+      gym: { cap: 300 },
+      maternity: { amount: 300 },
+      hospitalComfort: "semi-private",
+      travel: true,
+      basePremium: { child: 30, adult: 52, senior: 74 }
+    },
+    {
+      tier: "Premium",
+      altMed: { percent: 100, cap: 4000 },
+      dental: { percent: 90, cap: 5000 },
+      glasses: { amount: 600, periodYears: 2 },
+      gym: { cap: 500 },
+      maternity: { amount: 600 },
+      hospitalComfort: "private",
+      travel: true,
+      basePremium: { child: 48, adult: 85, senior: 125 }
+    }
+  ];
+
+  var INSURER_CONFIG = [
+    { id: "groupe-mutuel", name: "Groupe Mutuel", color: "#e35d5d", url: "https://www.groupemutuel.ch",
+      planNames: ["MEDICAL PLUS 75", "MEDICAL PLUS 90", "HOSPITAL PLUS + MEDICAL PLUS 100"],
+      premiumFactor: 0.97, capFactor: 1.00 },
+    { id: "helsana", name: "Helsana", color: "#5bb98c", url: "https://www.helsana.ch",
+      planNames: ["SANA", "COMPLETA", "COMPLETA TOP"],
+      premiumFactor: 1.05, capFactor: 1.10 },
+    { id: "css", name: "CSS", color: "#4f7fd1", url: "https://www.css.ch",
+      planNames: ["myFlex Balance", "myFlex Perfect", "myFlex Perfect Plus"],
+      premiumFactor: 1.00, capFactor: 0.95 },
+    { id: "sanitas", name: "Sanitas", color: "#e0a53e", url: "https://www.sanitas.com",
+      planNames: ["Vital Basic", "Vital Smart", "Vital Premium"],
+      premiumFactor: 1.02, capFactor: 1.15 },
+    { id: "swica", name: "Swica", color: "#d1618a", url: "https://www.swica.ch",
+      planNames: ["COMPLETA BASIC", "COMPLETA TOP", "COMPLETA TOP PLUS"],
+      premiumFactor: 1.08, capFactor: 1.05 },
+    { id: "atupri", name: "Atupri", color: "#8b7fd6", url: "https://www.atupri.ch",
+      planNames: ["Extra Ambulant", "Extra Comfort", "Extra Top"],
+      premiumFactor: 0.93, capFactor: 0.90 }
+  ];
+
+  var INSURERS = INSURER_CONFIG.map(function(cfg){
+    return {
+      id: cfg.id, name: cfg.name, color: cfg.color, url: cfg.url,
+      premiumFactor: cfg.premiumFactor, capFactor: cfg.capFactor,
+      tiers: BASE_TIERS.map(function(t, i){
+        var clone = JSON.parse(JSON.stringify(t));
+        clone.planName = cfg.planNames[i];
+        return clone;
+      })
+    };
+  });
+
+  var COMFORT_RANK = { "general": 0, "semi-private": 1, "private": 2 };
+  var COMFORT_LABEL = { "general": "General ward", "semi-private": "Semi-private ward", "private": "Private ward" };
+
+  /* ------------------------------ helpers ------------------------------ */
+
+  function uid(){ return Math.random().toString(36).slice(2, 10); }
+
+  function computeAge(birthDateStr){
+    if (!birthDateStr) return null;
+    var b = new Date(birthDateStr);
+    if (isNaN(b.getTime())) return null;
+    var today = new Date();
+    var age = today.getFullYear() - b.getFullYear();
+    var m = today.getMonth() - b.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--;
+    return age;
+  }
+
+  function ageBand(age){
+    if (age === null) return "adult";
+    if (age < 18) return "child";
+    if (age >= 65) return "senior";
+    return "adult";
+  }
+
+  function chf(n){
+    var v = Math.round(n);
+    return "CHF " + v.toLocaleString("de-CH");
+  }
+
+  function chfSigned(n){
+    var v = Math.round(n);
+    return (v >= 0 ? "+" : "") + chf(v);
+  }
+
+  function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
+
+  /* ---------------------------- calc engine ----------------------------- */
+
+  function computeReimbursement(needs, tier, capFactor){
+    var breakdown = {};
+    var altCap = tier.altMed.cap * capFactor;
+    breakdown.altMed = Math.min((needs.altMedSpend || 0) * tier.altMed.percent / 100, altCap);
+
+    var dentalSpend = needs.dentalNeed === "major" ? 4000 : (needs.dentalNeed === "routine" ? 800 : 0);
+    var dentalCap = tier.dental.cap * capFactor;
+    breakdown.dental = dentalSpend > 0 ? Math.min(dentalSpend * tier.dental.percent / 100, dentalCap) : 0;
+
+    var glassesCap = tier.glasses.amount * capFactor;
+    var glassesReimbPeriod = (needs.glassesSpend || 0) > 0 ? Math.min(needs.glassesSpend, glassesCap) : 0;
+    breakdown.glasses = glassesReimbPeriod / tier.glasses.periodYears;
+
+    var gymCap = tier.gym.cap * capFactor;
+    breakdown.gym = (needs.gymSpend || 0) > 0 ? Math.min(needs.gymSpend, gymCap) : 0;
+
+    breakdown.maternity = needs.pregnancy ? tier.maternity.amount * capFactor : 0;
+
+    var total = breakdown.altMed + breakdown.dental + breakdown.glasses + breakdown.gym + breakdown.maternity;
+    return { total: total, breakdown: breakdown };
+  }
+
+  function premiumMid(tier, band, premiumFactor){
+    return tier.basePremium[band] * premiumFactor;
+  }
+
+  function premiumRange(tier, band, premiumFactor){
+    var mid = premiumMid(tier, band, premiumFactor);
+    return [mid * 0.85, mid * 1.15];
+  }
+
+  function passesGating(tier, capFactor, needs){
+    if (needs.dentalNeed === "major" && tier.dental.cap * capFactor < 3000) return false;
+    if (COMFORT_RANK[tier.hospitalComfort] < COMFORT_RANK[needs.comfortPref]) return false;
+    return true;
+  }
+
+  function recommendForPerson(member, needs){
+    var age = computeAge(member.birthDate);
+    var band = ageBand(age);
+    var candidates = [];
+
+    INSURERS.forEach(function(insurer){
+      insurer.tiers.forEach(function(tier, idx){
+        var passes = passesGating(tier, insurer.capFactor, needs);
+        var reimb = computeReimbursement(needs, tier, insurer.capFactor);
+        var premium = premiumMid(tier, band, insurer.premiumFactor);
+        var range = premiumRange(tier, band, insurer.premiumFactor);
+        var netAnnual = premium * 12 - reimb.total;
+        candidates.push({
+          insurerId: insurer.id,
+          insurerName: insurer.name,
+          insurerColor: insurer.color,
+          insurerUrl: insurer.url,
+          capFactor: insurer.capFactor,
+          tierIndex: idx,
+          tierLabel: tier.tier,
+          planName: tier.planName,
+          tierData: tier,
+          premium: premium,
+          premiumRange: range,
+          reimbursement: reimb.total,
+          breakdown: reimb.breakdown,
+          netAnnual: netAnnual,
+          passes: passes
+        });
+      });
+    });
+
+    var passing = candidates.filter(function(c){ return c.passes; });
+    passing.sort(function(a, b){ return a.netAnnual - b.netAnnual; });
+    var best = passing[0] || candidates[0];
+    var sameInsurer = candidates.filter(function(c){ return c.insurerId === best.insurerId; });
+    sameInsurer.sort(function(a, b){ return a.tierIndex - b.tierIndex; });
+
+    return { best: best, tiers: sameInsurer, band: band, age: age };
+  }
+
+  /* -------------------------------- state -------------------------------- */
+
+  function newMember(name){
+    return { id: uid(), name: name || "", birthDate: "" };
+  }
+
+  function defaultState(){
+    var m1 = newMember("");
+    var m2 = newMember("");
+    var coverage = {};
+    var needs = {};
+    [m1, m2].forEach(function(m){
+      coverage[m.id] = { hasComplementary: false, insurerId: "", planName: "", monthlyPremium: "" };
+      needs[m.id] = {
+        gymSpend: 0, glassesSpend: 0, dentalNeed: "none", altMedSpend: 0,
+        comfortPref: "general", pregnancy: false, travelFrequency: "rarely"
+      };
+    });
+    return {
+      step: 1,
+      household: { postalCode: "", members: [m1, m2] },
+      coverage: coverage,
+      needs: needs,
+      activeTab: { 2: m1.id, 3: m1.id }
+    };
+  }
+
+  var state = defaultState();
+
+  function ensureMemberData(id){
+    if (!state.coverage[id]) state.coverage[id] = { hasComplementary: false, insurerId: "", planName: "", monthlyPremium: "" };
+    if (!state.needs[id]) state.needs[id] = {
+      gymSpend: 0, glassesSpend: 0, dentalNeed: "none", altMedSpend: 0,
+      comfortPref: "general", pregnancy: false, travelFrequency: "rarely"
+    };
+  }
+
+  /* -------------------------------- render -------------------------------- */
+
+  var STEP_LABELS = ["Household", "Coverage", "Needs", "Results"];
+
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function render(){
+    var app = document.getElementById("app");
+    var html = "";
+    html += renderBrand();
+    html += renderStepper();
+    if (state.step === 1) html += renderStep1();
+    else if (state.step === 2) html += renderStep2();
+    else if (state.step === 3) html += renderStep3();
+    else if (state.step === 4) html += renderStep4();
+    app.innerHTML = html;
+    attachHandlers();
+  }
+
+  function renderBrand(){
+    return (
+      '<div class="brand">' +
+        '<div class="brand-mark">F</div>' +
+        '<div>' +
+          '<div class="brand-name">Foyer</div>' +
+          '<div class="brand-sub">Complementary insurance simulator</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function renderStepper(){
+    var pills = "";
+    var labels = "";
+    for (var i = 1; i <= 4; i++){
+      var cls = i < state.step ? "done" : (i === state.step ? "active" : "");
+      pills += '<div class="step-pill ' + cls + '"></div>';
+    }
+    STEP_LABELS.forEach(function(label, idx){
+      var n = idx + 1;
+      labels += '<span class="' + (n === state.step ? "current" : "") + '">' + label + '</span>';
+    });
+    return '<div class="stepper">' + pills + '</div><div class="step-labels">' + labels + '</div>';
+  }
+
+  /* --------- Step 1: household --------- */
+
+  function isStep1Valid(){
+    var h = state.household;
+    if (!/^\d{4}$/.test(h.postalCode)) return false;
+    if (h.members.length === 0) return false;
+    return h.members.every(function(m){ return m.name.trim().length > 0 && m.birthDate; });
+  }
+
+  function renderStep1(){
+    var h = state.household;
+    var membersHtml = h.members.map(function(m, idx){
+      var removeBtn = h.members.length > 1
+        ? '<button class="remove-btn" data-action="remove-member" data-id="' + m.id + '">Remove</button>'
+        : "";
+      return (
+        '<div class="member-card">' +
+          removeBtn +
+          '<div class="row2">' +
+            '<div class="field">' +
+              '<label>Full name</label>' +
+              '<input type="text" placeholder="e.g. Alex Meier" value="' + esc(m.name) + '" data-action="member-name" data-id="' + m.id + '" />' +
+            '</div>' +
+            '<div class="field">' +
+              '<label>Date of birth</label>' +
+              '<input type="date" value="' + esc(m.birthDate) + '" max="' + todayISO() + '" data-action="member-birthdate" data-id="' + m.id + '" />' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+
+    return (
+      '<div class="card">' +
+        '<h2>Your household</h2>' +
+        '<p class="lede">Everyone at the same address shares one postal code. Add each household member you want to cover.</p>' +
+        '<div class="field" style="max-width:200px;">' +
+          '<label>Postal code (NPA)</label>' +
+          '<input type="text" inputmode="numeric" maxlength="4" placeholder="1000" value="' + esc(h.postalCode) + '" data-action="postal-code" />' +
+        '</div>' +
+        '<div class="section-title">Members</div>' +
+        membersHtml +
+        (h.members.length < 8 ? '<button class="btn-add" data-action="add-member">+ Add another household member</button>' : "") +
+      '</div>' +
+      '<div class="nav-row">' +
+        '<span></span>' +
+        '<button class="btn btn-primary" data-action="next" ' + (isStep1Valid() ? "" : "disabled") + '>Continue</button>' +
+      '</div>'
+    );
+  }
+
+  function todayISO(){
+    var d = new Date();
+    return d.toISOString().slice(0, 10);
+  }
+
+  /* --------- Step 2: current coverage --------- */
+
+  function renderMemberTabs(step){
+    var h = state.household;
+    return '<div class="tabbar">' + h.members.map(function(m){
+      var active = state.activeTab[step] === m.id;
+      var label = m.name.trim() || "Member";
+      return '<div class="tab ' + (active ? "active" : "") + '" data-action="tab" data-step="' + step + '" data-id="' + m.id + '">' + esc(label) + '</div>';
+    }).join("") + '</div>';
+  }
+
+  function currentTabMember(step){
+    var h = state.household;
+    var id = state.activeTab[step];
+    var m = h.members.filter(function(x){ return x.id === id; })[0];
+    return m || h.members[0];
+  }
+
+  function renderStep2(){
+    var m = currentTabMember(2);
+    ensureMemberData(m.id);
+    var c = state.coverage[m.id];
+
+    var insurerOptions = '<option value="">Select insurer…</option>' + INSURERS.map(function(ins){
+      return '<option value="' + ins.id + '" ' + (c.insurerId === ins.id ? "selected" : "") + '>' + ins.name + '</option>';
+    }).join("") + '<option value="other" ' + (c.insurerId === "other" ? "selected" : "") + '>Other / not sure</option>';
+
+    return (
+      '<div class="card">' +
+        '<h2>Current coverage</h2>' +
+        '<p class="lede">Tell us what each person already has, if anything. This lets us estimate potential savings.</p>' +
+        renderMemberTabs(2) +
+        '<div class="toggle-row" style="margin-bottom:18px;">' +
+          '<div class="toggle-btn ' + (c.hasComplementary ? "" : "active") + '" data-action="cov-has" data-id="' + m.id + '" data-value="false">No complementary insurance</div>' +
+          '<div class="toggle-btn ' + (c.hasComplementary ? "active" : "") + '" data-action="cov-has" data-id="' + m.id + '" data-value="true">Has complementary insurance</div>' +
+        '</div>' +
+        (c.hasComplementary ? (
+          '<div class="row3">' +
+            '<div class="field">' +
+              '<label>Current insurer</label>' +
+              '<select data-action="cov-insurer" data-id="' + m.id + '">' + insurerOptions + '</select>' +
+            '</div>' +
+            '<div class="field">' +
+              '<label>Plan name</label>' +
+              '<input type="text" placeholder="e.g. COMPLETA" value="' + esc(c.planName) + '" data-action="cov-plan" data-id="' + m.id + '" />' +
+            '</div>' +
+            '<div class="field">' +
+              '<label>Monthly premium (CHF)</label>' +
+              '<input type="number" min="0" placeholder="e.g. 55" value="' + esc(c.monthlyPremium) + '" data-action="cov-premium" data-id="' + m.id + '" />' +
+              '<div class="helptext">Optional — used to estimate savings vs. your recommendation.</div>' +
+            '</div>' +
+          '</div>'
+        ) : "") +
+      '</div>' +
+      renderNav()
+    );
+  }
+
+  /* --------- Step 3: needs questionnaire --------- */
+
+  function renderStep3(){
+    var m = currentTabMember(3);
+    ensureMemberData(m.id);
+    var n = state.needs[m.id];
+
+    var dentalOptions = [
+      ["none", "None expected"],
+      ["routine", "Routine care"],
+      ["major", "Major work (orthodontics, implants…)"]
+    ];
+    var comfortOptions = [
+      ["general", "General ward"],
+      ["semi-private", "Semi-private room"],
+      ["private", "Private room"]
+    ];
+    var travelOptions = [
+      ["rarely", "Rarely travel abroad"],
+      ["sometimes", "A few trips a year"],
+      ["often", "Frequent traveller"]
+    ];
+
+    function selectHtml(action, id, opts, current){
+      return '<select data-action="' + action + '" data-id="' + id + '">' + opts.map(function(o){
+        return '<option value="' + o[0] + '" ' + (current === o[0] ? "selected" : "") + '>' + o[1] + '</option>';
+      }).join("") + '</select>';
+    }
+
+    return (
+      '<div class="card">' +
+        '<h2>Health &amp; lifestyle needs</h2>' +
+        '<p class="lede">A few questions per person so we can match coverage that actually pays out for how you live.</p>' +
+        renderMemberTabs(3) +
+
+        '<div class="row2">' +
+          '<div class="field">' +
+            '<label>Annual gym / fitness spend (CHF)</label>' +
+            '<input type="number" min="0" step="10" value="' + esc(n.gymSpend) + '" data-action="need-gymSpend" data-id="' + m.id + '" />' +
+          '</div>' +
+          '<div class="field">' +
+            '<label>Glasses / contact lenses, next 2 years (CHF)</label>' +
+            '<input type="number" min="0" step="10" value="' + esc(n.glassesSpend) + '" data-action="need-glassesSpend" data-id="' + m.id + '" />' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="row2">' +
+          '<div class="field">' +
+            '<label>Dental care expected</label>' +
+            selectHtml("need-dentalNeed", m.id, dentalOptions, n.dentalNeed) +
+          '</div>' +
+          '<div class="field">' +
+            '<label>Alternative medicine spend / year (CHF)</label>' +
+            '<input type="number" min="0" step="10" value="' + esc(n.altMedSpend) + '" data-action="need-altMedSpend" data-id="' + m.id + '" />' +
+            '<div class="helptext">Osteopathy, homeopathy, acupuncture, TCM…</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="row2">' +
+          '<div class="field">' +
+            '<label>Hospital comfort preference</label>' +
+            selectHtml("need-comfortPref", m.id, comfortOptions, n.comfortPref) +
+          '</div>' +
+          '<div class="field">' +
+            '<label>Travel abroad</label>' +
+            selectHtml("need-travelFrequency", m.id, travelOptions, n.travelFrequency) +
+          '</div>' +
+        '</div>' +
+
+        '<div class="field" style="max-width:280px;">' +
+          '<label>Planning a pregnancy in the next year?</label>' +
+          '<div class="toggle-row">' +
+            '<div class="toggle-btn ' + (!n.pregnancy ? "active" : "") + '" data-action="need-pregnancy" data-id="' + m.id + '" data-value="false">No</div>' +
+            '<div class="toggle-btn ' + (n.pregnancy ? "active" : "") + '" data-action="need-pregnancy" data-id="' + m.id + '" data-value="true">Yes</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      renderNav()
+    );
+  }
+
+  function renderNav(){
+    return (
+      '<div class="nav-row">' +
+        '<button class="btn btn-ghost" data-action="back">Back</button>' +
+        '<button class="btn btn-primary" data-action="next">Continue</button>' +
+      '</div>'
+    );
+  }
+
+  /* --------- Step 4: results --------- */
+
+  function renderStep4(){
+    var h = state.household;
+    var results = h.members.map(function(m){
+      ensureMemberData(m.id);
+      var rec = recommendForPerson(m, state.needs[m.id]);
+      return { member: m, rec: rec, coverage: state.coverage[m.id] };
+    });
+
+    var totalPremium = results.reduce(function(sum, r){ return sum + r.rec.best.premium; }, 0);
+    var totalReimb = results.reduce(function(sum, r){ return sum + r.rec.best.reimbursement; }, 0);
+    var totalNet = results.reduce(function(sum, r){ return sum + r.rec.best.netAnnual; }, 0);
+
+    var html = "";
+    html += (
+      '<div class="disclaimer">' +
+        '<span class="ico">&#9888;</span>' +
+        '<span>Plan names reflect real product families from each insurer\'s public range. ' +
+        'Reimbursement percentages, caps and premiums shown are <b>illustrative estimates</b> for simulation purposes only — ' +
+        'not verified against current contract fiches. Always confirm exact terms and get a binding quote on the insurer\'s own site before deciding.</span>' +
+      '</div>'
+    );
+
+    html += '<div class="card">';
+    html += '<h2>Household summary</h2>';
+    html += '<p class="lede">Based on the recommended plan for each member.</p>';
+    html += (
+      '<div class="summary-strip">' +
+        '<div class="summary-tile"><div class="label">Total monthly premium</div><div class="value">' + chf(totalPremium) + '</div></div>' +
+        '<div class="summary-tile"><div class="label">Est. annual reimbursement</div><div class="value good">' + chf(totalReimb) + '</div></div>' +
+        '<div class="summary-tile"><div class="label">Est. net annual cost</div><div class="value">' + chf(totalNet) + '</div></div>' +
+      '</div>'
+    );
+    html += '</div>';
+
+    results.forEach(function(r){
+      html += renderPersonResult(r);
+    });
+
+    html += (
+      '<div class="restart-row">' +
+        '<button data-action="restart">Start over</button>' +
+      '</div>' +
+      '<div class="nav-row">' +
+        '<button class="btn btn-ghost" data-action="back">Back</button>' +
+        '<span></span>' +
+      '</div>'
+    );
+
+    return html;
+  }
+
+  function renderPersonResult(r){
+    var m = r.member, rec = r.rec, best = rec.best, cov = r.coverage;
+    var age = rec.age;
+    var ageStr = age === null ? "" : (age + "y · " + rec.band);
+
+    var breakdownChips = [];
+    if (best.breakdown.altMed > 0) breakdownChips.push(["Alt. medicine", best.breakdown.altMed]);
+    if (best.breakdown.dental > 0) breakdownChips.push(["Dental", best.breakdown.dental]);
+    if (best.breakdown.glasses > 0) breakdownChips.push(["Glasses", best.breakdown.glasses]);
+    if (best.breakdown.gym > 0) breakdownChips.push(["Gym/fitness", best.breakdown.gym]);
+    if (best.breakdown.maternity > 0) breakdownChips.push(["Maternity", best.breakdown.maternity]);
+    var chipsHtml = breakdownChips.length
+      ? '<div class="breakdown-list">' + breakdownChips.map(function(c){
+          return '<span class="chip">' + c[0] + ' <b>' + chf(c[1]) + '/yr</b></span>';
+        }).join("") + '</div>'
+      : '<div class="helptext" style="margin:10px 0;">No specific ambulatory needs entered — this reflects a baseline recommendation.</div>';
+
+    var savingsHtml = "";
+    var currentPremium = parseFloat(cov.monthlyPremium);
+    if (cov.hasComplementary && !isNaN(currentPremium) && currentPremium > 0){
+      var currentAnnualCost = currentPremium * 12;
+      var savings = currentAnnualCost - best.netAnnual;
+      var cls = savings >= 0 ? "pos" : "neg";
+      var verb = savings >= 0 ? "could save about" : "would cost about";
+      savingsHtml = (
+        '<div class="savings-note ' + cls + '">' +
+          'Vs. your current ' + chf(currentPremium) + '/mo, this recommendation ' + verb + ' ' +
+          chf(Math.abs(savings)) + '/year net.' +
+        '</div>'
+      );
+    }
+
+    var tierTableRows = buildTierTable(rec.tiers, best.tierIndex);
+
+    return (
+      '<div class="person-result">' +
+        '<div class="person-result-head">' +
+          '<div>' +
+            '<div class="person-name">' + esc(m.name || "Household member") + '</div>' +
+            '<div class="person-meta">' + esc(ageStr) + '</div>' +
+          '</div>' +
+          '<div class="rec-badge">' + esc(best.insurerName) + ' — ' + esc(best.planName) + '</div>' +
+        '</div>' +
+
+        '<div class="metric-row">' +
+          '<div class="metric"><div class="k">Monthly premium (est.)</div><div class="v">' + chf(best.premium) + '</div></div>' +
+          '<div class="metric"><div class="k">Est. annual reimbursement</div><div class="v" style="color:var(--success)">' + chf(best.reimbursement) + '</div></div>' +
+          '<div class="metric"><div class="k">Est. net annual cost</div><div class="v">' + chf(best.netAnnual) + '</div></div>' +
+        '</div>' +
+
+        chipsHtml +
+        savingsHtml +
+
+        '<div class="tier-table-wrap">' +
+          '<table class="tier-table">' +
+            '<thead><tr>' +
+              '<th>Coverage</th>' +
+              tierTableRows.headerCells +
+            '</tr></thead>' +
+            '<tbody>' + tierTableRows.bodyRows + '</tbody>' +
+          '</table>' +
+        '</div>' +
+
+        '<a class="quote-link" href="' + best.insurerUrl + '" target="_blank" rel="noopener noreferrer">' +
+          'Get a real quote on ' + esc(best.insurerName) + '\'s site →' +
+        '</a>' +
+      '</div>'
+    );
+  }
+
+  function buildTierTable(tiers, recommendedIdx){
+    var headerCells = tiers.map(function(t, i){
+      var hl = i === recommendedIdx ? "tier-col-highlight" : "";
+      return (
+        '<th class="' + hl + '">' +
+          '<span class="tier-name">' + esc(t.planName) + '</span>' +
+          (i === recommendedIdx ? '<span class="tier-recommended-tag">RECOMMENDED</span>' : "") +
+        '</th>'
+      );
+    }).join("");
+
+    function row(label, valueFn){
+      var cells = tiers.map(function(t, i){
+        var hl = i === recommendedIdx ? "tier-col-highlight" : "";
+        return '<td class="' + hl + '">' + valueFn(t) + '</td>';
+      }).join("");
+      return '<tr><td>' + label + '</td>' + cells + '</tr>';
+    }
+
+    var bodyRows = "";
+    bodyRows += row("Monthly premium (est. range)", function(t){
+      var range = premiumRange(t.tierData, "adult", 1); // display shape only, real range computed per-tier below
+      return "~" + chf(t.premiumRange[0]) + "–" + chf(t.premiumRange[1]);
+    });
+    bodyRows += row("Alternative medicine", function(t){
+      return t.tierData.altMed.percent + "% up to " + chf(t.tierData.altMed.cap * t.capFactor) + "/yr";
+    });
+    bodyRows += row("Dental", function(t){
+      return t.tierData.dental.cap === 0 ? "Not covered" : (t.tierData.dental.percent + "% up to " + chf(t.tierData.dental.cap * t.capFactor));
+    });
+    bodyRows += row("Glasses / lenses", function(t){
+      return chf(t.tierData.glasses.amount * t.capFactor) + " / " + t.tierData.glasses.periodYears + "yrs";
+    });
+    bodyRows += row("Gym / fitness", function(t){
+      return "up to " + chf(t.tierData.gym.cap * t.capFactor) + "/yr";
+    });
+    bodyRows += row("Hospital comfort", function(t){
+      return COMFORT_LABEL[t.tierData.hospitalComfort];
+    });
+    bodyRows += row("Travel / emergency abroad", function(t){
+      return t.tierData.travel ? "Included" : "—";
+    });
+
+    return { headerCells: headerCells, bodyRows: bodyRows };
+  }
+
+  /* ------------------------------ handlers ------------------------------ */
+
+  function attachHandlers(){
+    var app = document.getElementById("app");
+
+    app.querySelectorAll('[data-action="postal-code"]').forEach(function(el){
+      el.addEventListener("input", function(){
+        state.household.postalCode = el.value.replace(/\D/g, "").slice(0, 4);
+        render();
+        focusEl('[data-action="postal-code"]');
+      });
+    });
+
+    app.querySelectorAll('[data-action="member-name"]').forEach(function(el){
+      el.addEventListener("input", function(){
+        var id = el.getAttribute("data-id");
+        var m = findMember(id);
+        if (m) m.name = el.value;
+        render();
+        focusEl('[data-action="member-name"][data-id="' + id + '"]', true);
+      });
+    });
+
+    app.querySelectorAll('[data-action="member-birthdate"]').forEach(function(el){
+      el.addEventListener("input", function(){
+        var id = el.getAttribute("data-id");
+        var m = findMember(id);
+        if (m) m.birthDate = el.value;
+        render();
+      });
+    });
+
+    app.querySelectorAll('[data-action="add-member"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        var m = newMember("");
+        state.household.members.push(m);
+        ensureMemberData(m.id);
+        render();
+      });
+    });
+
+    app.querySelectorAll('[data-action="remove-member"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        var id = el.getAttribute("data-id");
+        state.household.members = state.household.members.filter(function(m){ return m.id !== id; });
+        delete state.coverage[id];
+        delete state.needs[id];
+        if (state.activeTab[2] === id) state.activeTab[2] = state.household.members[0].id;
+        if (state.activeTab[3] === id) state.activeTab[3] = state.household.members[0].id;
+        render();
+      });
+    });
+
+    app.querySelectorAll('[data-action="tab"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        var step = el.getAttribute("data-step");
+        var id = el.getAttribute("data-id");
+        state.activeTab[step] = id;
+        render();
+      });
+    });
+
+    app.querySelectorAll('[data-action="cov-has"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        var id = el.getAttribute("data-id");
+        state.coverage[id].hasComplementary = el.getAttribute("data-value") === "true";
+        render();
+      });
+    });
+
+    bindTextInput("cov-insurer", function(id, val){ state.coverage[id].insurerId = val; }, "change");
+    bindTextInput("cov-plan", function(id, val){ state.coverage[id].planName = val; }, "input");
+    bindTextInput("cov-premium", function(id, val){ state.coverage[id].monthlyPremium = val; }, "input");
+
+    app.querySelectorAll('[data-action="need-pregnancy"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        var id = el.getAttribute("data-id");
+        state.needs[id].pregnancy = el.getAttribute("data-value") === "true";
+        render();
+      });
+    });
+
+    ["gymSpend", "glassesSpend", "altMedSpend"].forEach(function(field){
+      bindTextInput("need-" + field, function(id, val){
+        state.needs[id][field] = clamp(parseFloat(val) || 0, 0, 100000);
+      }, "input");
+    });
+    bindTextInput("need-dentalNeed", function(id, val){ state.needs[id].dentalNeed = val; }, "change");
+    bindTextInput("need-comfortPref", function(id, val){ state.needs[id].comfortPref = val; }, "change");
+    bindTextInput("need-travelFrequency", function(id, val){ state.needs[id].travelFrequency = val; }, "change");
+
+    app.querySelectorAll('[data-action="next"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        if (state.step === 1 && !isStep1Valid()) return;
+        state.step = Math.min(4, state.step + 1);
+        window.scrollTo(0, 0);
+        render();
+      });
+    });
+    app.querySelectorAll('[data-action="back"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        state.step = Math.max(1, state.step - 1);
+        window.scrollTo(0, 0);
+        render();
+      });
+    });
+    app.querySelectorAll('[data-action="restart"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        if (confirm("Start over? This clears everything you entered.")){
+          state = defaultState();
+          window.scrollTo(0, 0);
+          render();
+        }
+      });
+    });
+
+    function bindTextInput(action, setter, evt){
+      app.querySelectorAll('[data-action="' + action + '"]').forEach(function(el){
+        el.addEventListener(evt, function(){
+          var id = el.getAttribute("data-id");
+          setter(id, el.value);
+          render();
+          if (evt === "input") focusEl('[data-action="' + action + '"][data-id="' + id + '"]', true);
+        });
+      });
+    }
+
+    function focusEl(selector, placeAtEnd){
+      var el = app.querySelector(selector);
+      if (el){
+        el.focus();
+        if (placeAtEnd && el.setSelectionRange && typeof el.value === "string"){
+          var len = el.value.length;
+          try { el.setSelectionRange(len, len); } catch(e){}
+        }
+      }
+    }
+
+    function findMember(id){
+      return state.household.members.filter(function(m){ return m.id === id; })[0];
+    }
+  }
+
+  render();
+})();
+</script>
