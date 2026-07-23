@@ -245,6 +245,29 @@
     {
       id: "groupe-mutuel", name: "Groupe Mutuel", url: "https://www.groupemutuel.ch",
       sourced: true, sourceLabel: "Global smart conditions (GOGA02–F8, ed. 01.06.2023) + product overview (ed. 6.25)",
+      // Full named product catalog per "Aperçu des assurances complémentaires selon la LCA" (ed. 6.25) —
+      // used only for the coverage step's "what do you already have" picker. Only the Global smart (GO)
+      // family below is modeled in the recommendation engine.
+      knownPlanGroups: [
+        { group: "Global (ambulatoire + hospitalisation, un seul choisi)", items: [
+          "GL Global Niveau 1", "GL Global Niveau 2", "GL Global Niveau 3", "GL Global Niveau 4",
+          "GM Global mi-privée", "GP Global privée", "GX Global flex",
+          "GC Global confort Niveau 1", "GC Global confort Niveau 2", "GC Global confort Niveau 3", "GC Global confort Niveau 4",
+          "GF Global famille", "GT Global temporis",
+          "GO Global smart Niveau 1", "GO Global smart Niveau 2", "GO Global smart Niveau 3"
+        ] },
+        { group: "Soins complémentaires (ambulatoire)", items: [
+          "SC Soins complémentaires Niveau 1", "SC Soins complémentaires Niveau 2", "SC Soins complémentaires Niveau 3", "SC Soins complémentaires Niveau 4",
+          "SD Soins complémentaires Premium", "SO Soins complémentaires Optimum", "SA Soins Alterna", "SP Assurance Vitalis"
+        ] },
+        { group: "Hospitalisation", items: [
+          "HC Hospitalisation Niveau 1", "HC Hospitalisation Niveau 2", "HC Hospitalisation Niveau 3", "HC Hospitalisation Niveau 4",
+          "HB Hospitalisation H-Bonus", "HS Hôpital senior Classe 1", "HS Hôpital senior Classe 2", "HS Hôpital senior Classe 3", "HS Hôpital senior Classe 4",
+          "KH H-Capital", "BH Indemnité journalière hospitalisation"
+        ] },
+        { group: "Voyage & assistance à l'étranger", items: ["MU Mundo"] },
+        { group: "Dentaire", items: ["DP Dentaire plus Niveau 1", "DP Dentaire plus Niveau 2", "DP Dentaire plus Niveau 3"] }
+      ],
       tiers: [
         { tier: "Niveau 1", planName: "Global smart Niveau 1",
           altMed: { percent: 30, cap: 20000 }, dental: { percent: 0, cap: 0 },
@@ -266,6 +289,10 @@
     {
       id: "helsana", name: "Helsana", url: "https://www.helsana.ch",
       sourced: true, sourceLabel: "Assurances complémentaires ambulatoires brochure, édition 2025/26",
+      knownPlanGroups: [
+        { group: "Ambulatoire", items: ["TOP", "SANA", "COMPLETA", "COMPLETA PLUS", "PRIMEO"] },
+        { group: "Hospitalisation (produit séparé, non détaillé dans nos documents)", items: ["HOSPITAL"] }
+      ],
       tiers: [
         { tier: "Essential", planName: "TOP",
           altMed: { percent: 0, cap: 0 }, dental: { percent: 75, cap: 10000 },
@@ -329,6 +356,15 @@
     {
       id: "swica", name: "Swica", url: "https://www.swica.ch",
       sourced: true, sourceLabel: "SW/CA solutions d'assurance sur mesure, récapitulatif des prestations 2026",
+      knownPlanGroups: [
+        { group: "Ambulatoire (assurance complémentaire de base)", items: ["COMPLETA TOP", "COMPLETA FORTE"] },
+        { group: "Complémentaires étendues (à combiner avec COMPLETA)", items: ["PRAEVITA", "SUPPLEMENTA", "OPTIMA"] },
+        { group: "Dentaire", items: ["DENTA 1", "DENTA 2", "DENTA 3", "DENTA 4"] },
+        { group: "Hospitalisation", items: [
+          "HOSPITA COMMUNE", "HOSPITA PLUS", "HOSPITA DEMI-PRIVÉE", "HOSPITA FLEX DEMI-PRIVÉE",
+          "HOSPITA PRIVÉE", "HOSPITA FLEX PRIVÉE", "HOSPITA PRIVÉE MONDE ENTIER (BestMed)"
+        ] }
+      ],
       tiers: [
         { tier: "Top", planName: "COMPLETA TOP",
           altMed: { percent: 100, cap: 1600 }, dental: { percent: 0, cap: 0 },
@@ -397,7 +433,17 @@
     return "CHF " + v.toLocaleString("de-CH");
   }
 
-  function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
+  // Chromium (and most browsers) throw on setSelectionRange() for
+  // type="number" inputs, so the cursor-restore trick used elsewhere
+  // silently fails on them and every keystroke lands at position 0.
+  // These fields use type="text" + inputmode="decimal" instead, with this
+  // sanitizer keeping only digits and a single decimal point.
+  function sanitizeDecimal(raw){
+    var s = String(raw == null ? "" : raw).replace(/[^\d.]/g, "");
+    var firstDot = s.indexOf(".");
+    if (firstDot !== -1) s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, "");
+    return s;
+  }
 
   function regionFromPostal(code){
     if (!/^\d{4}$/.test(code || "")) return "";
@@ -802,16 +848,22 @@
     }).join("") + '<option value="other" ' + (c.insurerId === "other" ? "selected" : "") + '>Other / not sure</option>';
 
     var knownInsurer = INSURERS.filter(function(i){ return i.id === c.insurerId; })[0];
-    var planFieldHtml = knownInsurer
-      ? (
-          '<select data-action="cov-plan" data-id="' + m.id + '">' +
-            '<option value="">Select plan…</option>' +
-            knownInsurer.tiers.map(function(t){
-              return '<option value="' + esc(t.planName) + '" ' + (c.planName === t.planName ? "selected" : "") + '>' + esc(t.tier) + ' — ' + esc(t.planName) + '</option>';
-            }).join("") +
-          '</select>'
-        )
-      : '<input type="text" placeholder="e.g. COMPLETA" value="' + esc(c.planName) + '" data-action="cov-plan" data-id="' + m.id + '" />';
+    var planFieldHtml;
+    if (knownInsurer){
+      var planGroups = knownInsurer.knownPlanGroups || [{
+        group: "",
+        items: knownInsurer.tiers.map(function(t){ return t.tier + " — " + t.planName; })
+      }];
+      var planOptionsHtml = planGroups.map(function(g){
+        var opts = g.items.map(function(label){
+          return '<option value="' + esc(label) + '" ' + (c.planName === label ? "selected" : "") + '>' + esc(label) + '</option>';
+        }).join("");
+        return g.group ? ('<optgroup label="' + esc(g.group) + '">' + opts + '</optgroup>') : opts;
+      }).join("");
+      planFieldHtml = '<select data-action="cov-plan" data-id="' + m.id + '"><option value="">Select plan…</option>' + planOptionsHtml + '</select>';
+    } else {
+      planFieldHtml = '<input type="text" placeholder="e.g. COMPLETA" value="' + esc(c.planName) + '" data-action="cov-plan" data-id="' + m.id + '" />';
+    }
 
     return (
       '<div class="card">' +
@@ -834,7 +886,7 @@
             '</div>' +
             '<div class="field">' +
               '<label>Monthly premium (CHF)</label>' +
-              '<input type="number" min="0" placeholder="e.g. 55" value="' + esc(c.monthlyPremium) + '" data-action="cov-premium" data-id="' + m.id + '" />' +
+              '<input type="text" inputmode="decimal" placeholder="e.g. 55" value="' + esc(c.monthlyPremium) + '" data-action="cov-premium" data-id="' + m.id + '" />' +
               '<div class="helptext">Optional — for your own reference when comparing quotes.</div>' +
             '</div>' +
           '</div>'
@@ -882,11 +934,11 @@
         '<div class="row2">' +
           '<div class="field">' +
             '<label>Annual gym / fitness spend (CHF)</label>' +
-            '<input type="number" min="0" step="10" value="' + esc(n.gymSpend) + '" data-action="need-gymSpend" data-id="' + m.id + '" />' +
+            '<input type="text" inputmode="decimal" value="' + esc(n.gymSpend) + '" data-action="need-gymSpend" data-id="' + m.id + '" />' +
           '</div>' +
           '<div class="field">' +
             '<label>Glasses / contact lenses, next 2 years (CHF)</label>' +
-            '<input type="number" min="0" step="10" value="' + esc(n.glassesSpend) + '" data-action="need-glassesSpend" data-id="' + m.id + '" />' +
+            '<input type="text" inputmode="decimal" value="' + esc(n.glassesSpend) + '" data-action="need-glassesSpend" data-id="' + m.id + '" />' +
           '</div>' +
         '</div>' +
 
@@ -897,7 +949,7 @@
           '</div>' +
           '<div class="field">' +
             '<label>Alternative medicine spend / year (CHF)</label>' +
-            '<input type="number" min="0" step="10" value="' + esc(n.altMedSpend) + '" data-action="need-altMedSpend" data-id="' + m.id + '" />' +
+            '<input type="text" inputmode="decimal" value="' + esc(n.altMedSpend) + '" data-action="need-altMedSpend" data-id="' + m.id + '" />' +
             '<div class="helptext">Osteopathy, homeopathy, acupuncture, TCM…</div>' +
           '</div>' +
         '</div>' +
@@ -1167,7 +1219,7 @@
           '</div>' +
           '<div class="field" style="margin-bottom:8px;">' +
             '<label>Monthly premium (CHF)</label>' +
-            '<input type="number" min="0" step="0.05" placeholder="e.g. 62.40" value="' + esc(qf.premium) + '" data-action="quote-premium" data-id="' + m.id + '" />' +
+            '<input type="text" inputmode="decimal" placeholder="e.g. 62.40" value="' + esc(qf.premium) + '" data-action="quote-premium" data-id="' + m.id + '" />' +
           '</div>' +
         '</div>' +
         '<button class="btn btn-primary btn-sm" data-action="quote-save" data-id="' + m.id + '" ' + (qf.premium && qf.status !== "saving" ? "" : "disabled") + '>Save quote</button>' +
@@ -1322,7 +1374,7 @@
     });
     bindTextInput("cov-plan", function(id, val){ state.coverage[id].planName = val; }, "input");
     bindTextInput("cov-plan", function(id, val){ state.coverage[id].planName = val; }, "change");
-    bindTextInput("cov-premium", function(id, val){ state.coverage[id].monthlyPremium = val; }, "input");
+    bindTextInput("cov-premium", function(id, val){ state.coverage[id].monthlyPremium = sanitizeDecimal(val); }, "input");
 
     app.querySelectorAll('[data-action="need-pregnancy"]').forEach(function(el){
       el.addEventListener("click", function(){
@@ -1334,7 +1386,11 @@
 
     ["gymSpend", "glassesSpend", "altMedSpend"].forEach(function(field){
       bindTextInput("need-" + field, function(id, val){
-        state.needs[id][field] = clamp(parseFloat(val) || 0, 0, 100000);
+        // Store the sanitized string as typed, not a parsed/clamped number —
+        // coercing to a number on every keystroke fights the user's cursor
+        // and forces the field back to "0" the moment it's cleared to retype.
+        // computeReimbursement()'s arithmetic coerces this string for us.
+        state.needs[id][field] = sanitizeDecimal(val);
       }, "input");
     });
     bindTextInput("need-dentalNeed", function(id, val){ state.needs[id].dentalNeed = val; }, "change");
@@ -1378,7 +1434,7 @@
     app.querySelectorAll('[data-action="quote-premium"]').forEach(function(el){
       el.addEventListener("input", function(){
         var id = el.getAttribute("data-id");
-        state.quoteForm[id].premium = el.value;
+        state.quoteForm[id].premium = sanitizeDecimal(el.value);
         render();
         focusEl('[data-action="quote-premium"][data-id="' + id + '"]', true);
       });
