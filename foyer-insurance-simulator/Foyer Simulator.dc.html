@@ -213,81 +213,146 @@
   "use strict";
 
   /* ---------------------------------------------------------------------
-   * DATA — reimbursement rules and premiums below are ILLUSTRATIVE
-   * ESTIMATES for simulation purposes. They are not sourced from verified
-   * insurer contract fiches (IPID). See scratch/gm-fiche.txt and
-   * scratch/swica.txt for what's been researched so far and what's left
-   * to extract from real PDFs.
+   * DATA — reimbursement rules below are sourced from each insurer's own
+   * official 2025/26 product brochures and general/supplementary
+   * conditions (CGA/CSA/CC), supplied directly by the user. Every field
+   * traces to a real named product; where a brochure summarized rather
+   * than itemized a figure (e.g. a per-domain cap, or a ward class not
+   * spelled out per tier), that's noted in the tier's `note`. Atupri has
+   * no official documents yet — its tiers are carried over from public
+   * web research and are explicitly flagged `sourced: false`.
+   *
+   * Premiums are intentionally NOT modeled: Swiss LCA premiums depend on
+   * age, canton and underwriting, and none of these insurers expose a
+   * public pricing API. The results page links straight to each
+   * insurer's own calculator instead of guessing a number.
    * ------------------------------------------------------------------- */
 
-  var BASE_TIERS = [
+  var INSURERS = [
     {
-      tier: "Essential",
-      altMed: { percent: 75, cap: 1000 },
-      dental: { percent: 0, cap: 0 },
-      glasses: { amount: 150, periodYears: 2 },
-      gym: { cap: 150 },
-      maternity: { amount: 150 },
-      hospitalComfort: "general",
-      travel: true,
-      basePremium: { child: 18, adult: 30, senior: 42 }
+      id: "groupe-mutuel", name: "Groupe Mutuel", url: "https://www.groupemutuel.ch",
+      sourced: true, sourceLabel: "Global smart conditions (GOGA02–F8, ed. 01.06.2023) + product overview (ed. 6.25)",
+      tiers: [
+        { tier: "Niveau 1", planName: "Global smart Niveau 1",
+          altMed: { percent: 30, cap: 20000 }, dental: { percent: 0, cap: 0 },
+          glasses: { amount: 150, periodYears: 3 }, gym: { percent: 50, cap: 200 },
+          hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
+          note: "Alternative medicine has no published annual ceiling in the CP — treated as uncapped. Dental: none. Maternity covered as ordinary treatment after a 12-month waiting period, not a fixed payout." },
+        { tier: "Niveau 2", planName: "Global smart Niveau 2",
+          altMed: { percent: 60, cap: 20000 }, dental: { percent: 50, cap: 500 },
+          glasses: { amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
+          hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
+          note: "Dental figure is the adult (19+) rate; under-19 cap is CHF 2000." },
+        { tier: "Niveau 3", planName: "Global smart Niveau 3",
+          altMed: { percent: 90, cap: 20000 }, dental: { percent: 50, cap: 1000 },
+          glasses: { amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
+          hospitalComfort: "private", maternity: { amount: 0 }, travel: true,
+          note: "Hospital division is semi-private or private, assured's choice, per the policy. Dental figure is the adult (19+) rate; under-19 cap is CHF 2000." }
+      ]
     },
     {
-      tier: "Balanced",
-      altMed: { percent: 90, cap: 2000 },
-      dental: { percent: 75, cap: 2000 },
-      glasses: { amount: 300, periodYears: 2 },
-      gym: { cap: 300 },
-      maternity: { amount: 300 },
-      hospitalComfort: "semi-private",
-      travel: true,
-      basePremium: { child: 30, adult: 52, senior: 74 }
+      id: "helsana", name: "Helsana", url: "https://www.helsana.ch",
+      sourced: true, sourceLabel: "Assurances complémentaires ambulatoires brochure, édition 2025/26",
+      tiers: [
+        { tier: "Essential", planName: "TOP",
+          altMed: { percent: 0, cap: 0 }, dental: { percent: 75, cap: 10000 },
+          glasses: { amount: 150, periodYears: 1 }, gym: { percent: 0, cap: 0 },
+          hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
+          note: "TOP's real focus is orthodontics/eyewear/travel, not alternative medicine or fitness — the brochure doesn't itemize those for TOP. Dental cap is the orthodontics benefit (to age 20), not general adult dental. Hospital ward comfort (Helsana's separate HOSPITAL product) isn't in this document set." },
+        { tier: "Balanced", planName: "COMPLETA",
+          altMed: { percent: 75, cap: 3000 }, dental: { percent: 75, cap: 10000 },
+          glasses: { amount: 300, periodYears: 1 }, gym: { percent: 75, cap: 200 },
+          hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
+          note: "Alt-medicine annual cap is approximate: the brochure gives 75% ambulatory reimbursement but only states an explicit ceiling (CHF 5000) for inpatient complementary-medicine care, not outpatient. Marked as Helsana's “Topseller” in its own materials." },
+        { tier: "Premium", planName: "COMPLETA + COMPLETA PLUS",
+          altMed: { percent: 90, cap: 4000 }, dental: { percent: 75, cap: 10000 },
+          glasses: { amount: 500, periodYears: 1 }, gym: { percent: 75, cap: 400 },
+          hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
+          note: "COMPLETA PLUS is an add-on sold only in combination with COMPLETA — figures here are the two products' caps combined. Alt-medicine cap is approximate for the same reason as COMPLETA." }
+      ]
     },
     {
-      tier: "Premium",
-      altMed: { percent: 100, cap: 4000 },
-      dental: { percent: 90, cap: 5000 },
-      glasses: { amount: 600, periodYears: 2 },
-      gym: { cap: 500 },
-      maternity: { amount: 600 },
-      hospitalComfort: "private",
-      travel: true,
-      basePremium: { child: 48, adult: 85, senior: 125 }
+      id: "css", name: "CSS", url: "https://www.css.ch",
+      sourced: true, sourceLabel: "myFlex product brochure (Form. 517f–08.25) + Ambulatoire/Hospitalisation/Médecine alternative myFlex tables",
+      tiers: [
+        { tier: "Economy", planName: "myFlex Economy",
+          altMed: { percent: 75, cap: 1000 }, dental: { percent: 0, cap: 0 },
+          glasses: { amount: 0, periodYears: 1 }, gym: { percent: 50, cap: 300 },
+          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
+          note: "myFlex bundles 3 separate products (Ambulatoire, Hospitalisation, Médecine alternative myFlex); this row combines their Economy levels. General adult dental isn't covered by any myFlex tier (only child orthodontics), matching the real CGA. Hospital ward (general/semi-private/private) isn't tabulated per tier in the brochure — inferred from CSS's own “choose your comfort level” marketing copy." },
+        { tier: "Balance", planName: "myFlex Balance",
+          altMed: { percent: 75, cap: 3000 }, dental: { percent: 0, cap: 0 },
+          glasses: { amount: 150, periodYears: 1 }, gym: { percent: 50, cap: 500 },
+          hospitalComfort: "semi-private", maternity: { amount: 1500 }, travel: true,
+          note: "Hospital ward inferred (see Economy note)." },
+        { tier: "Premium", planName: "myFlex Premium",
+          altMed: { percent: 75, cap: 10000 }, dental: { percent: 0, cap: 0 },
+          glasses: { amount: 300, periodYears: 1 }, gym: { percent: 50, cap: 700 },
+          hospitalComfort: "private", maternity: { amount: 2000 }, travel: true,
+          note: "Hospital ward inferred (see Economy note)." }
+      ]
+    },
+    {
+      id: "sanitas", name: "Sanitas", url: "https://www.sanitas.com",
+      sourced: true, sourceLabel: "Vital product sheet, ed. 9046 02.26",
+      tiers: [
+        { tier: "Basic", planName: "Vital Basic",
+          altMed: { percent: 0, cap: 0 }, dental: { percent: 50, cap: 10000 },
+          glasses: { amount: 300, periodYears: 3 }, gym: { percent: 0, cap: 0 },
+          hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
+          note: "Dental figure is Vital's orthodontics benefit (to age 20), not general adult dental — Sanitas sells adult dental as a separate product. Vital doesn't include a hospital ward upgrade at any tier; that's Sanitas' separate Hospital Extra/Top Liberty product." },
+        { tier: "Smart", planName: "Vital Smart",
+          altMed: { percent: 80, cap: 5000 }, dental: { percent: 50, cap: 30000 },
+          glasses: { amount: 300, periodYears: 3 }, gym: { percent: 50, cap: 600 },
+          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
+          note: "Alt-medicine cap picked from Sanitas' two customer-selectable options (CHF 2500 or 5000). Dental (orthodontics) is stated as uncapped — CHF 30’000 stands in for “no ceiling”. Same hospital-ward caveat as Basic." },
+        { tier: "Premium", planName: "Vital Premium",
+          altMed: { percent: 80, cap: 10000 }, dental: { percent: 80, cap: 30000 },
+          glasses: { amount: 600, periodYears: 3 }, gym: { percent: 80, cap: 800 },
+          hospitalComfort: "general", maternity: { amount: 2000 }, travel: true,
+          note: "Dental (orthodontics) uncapped, see Smart note. Same hospital-ward caveat as Basic." }
+      ]
+    },
+    {
+      id: "swica", name: "Swica", url: "https://www.swica.ch",
+      sourced: true, sourceLabel: "SW/CA solutions d'assurance sur mesure, récapitulatif des prestations 2026",
+      tiers: [
+        { tier: "Top", planName: "COMPLETA TOP",
+          altMed: { percent: 100, cap: 1600 }, dental: { percent: 0, cap: 0 },
+          glasses: { amount: 200, periodYears: 3 }, gym: { percent: 90, cap: 500 },
+          hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
+          note: "Swica reimburses alt-medicine as “up to CHF 80/hour” rather than %+annual cap — the figure here approximates a typical ~20 sessions/year. General adult dental is sold separately as Denta (not modeled). Hospital ward requires Swica's separate Hospita product, not bundled into COMPLETA." },
+        { tier: "Forte", planName: "COMPLETA FORTE",
+          altMed: { percent: 100, cap: 2400 }, dental: { percent: 0, cap: 0 },
+          glasses: { amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
+          hospitalComfort: "general", maternity: { amount: 650 }, travel: true,
+          note: "Alt-medicine cap approximated the same way as TOP, at Forte's CHF 120/hour rate." },
+        { tier: "Forte + Hospita Privée", planName: "COMPLETA FORTE + HOSPITA PRIVÉE",
+          altMed: { percent: 100, cap: 2400 }, dental: { percent: 0, cap: 0 },
+          glasses: { amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
+          hospitalComfort: "private", maternity: { amount: 650 }, travel: true,
+          note: "Represents COMPLETA FORTE combined with Swica's separate Hospita Privée hospital product, as households commonly buy them together." }
+      ]
+    },
+    {
+      id: "atupri", name: "Atupri", url: "https://www.atupri.ch",
+      sourced: false, sourceLabel: "No official Atupri documents supplied yet — figures are estimates from public web research, not verified against a fiche/CGA",
+      tiers: [
+        { tier: "Basic", planName: "Basic",
+          altMed: { percent: 0, cap: 0 }, dental: { percent: 0, cap: 0 },
+          glasses: { amount: 0, periodYears: 1 }, gym: { percent: 75, cap: 200 },
+          hospitalComfort: "general", maternity: { amount: 0 }, travel: true, note: "Estimate, unverified." },
+        { tier: "Mivita Reala", planName: "Mivita Reala",
+          altMed: { percent: 50, cap: 1500 }, dental: { percent: 0, cap: 0 },
+          glasses: { amount: 0, periodYears: 1 }, gym: { percent: 50, cap: 300 },
+          hospitalComfort: "general", maternity: { amount: 300 }, travel: true, note: "Estimate, unverified." },
+        { tier: "Intense", planName: "Intense",
+          altMed: { percent: 50, cap: 1500 }, dental: { percent: 0, cap: 0 },
+          glasses: { amount: 350, periodYears: 1 }, gym: { percent: 50, cap: 300 },
+          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true, note: "Estimate, unverified." }
+      ]
     }
   ];
-
-  var INSURER_CONFIG = [
-    { id: "groupe-mutuel", name: "Groupe Mutuel", color: "#e35d5d", url: "https://www.groupemutuel.ch",
-      planNames: ["MEDICAL PLUS 75", "MEDICAL PLUS 90", "HOSPITAL PLUS + MEDICAL PLUS 100"],
-      premiumFactor: 0.97, capFactor: 1.00 },
-    { id: "helsana", name: "Helsana", color: "#5bb98c", url: "https://www.helsana.ch",
-      planNames: ["SANA", "COMPLETA", "COMPLETA TOP"],
-      premiumFactor: 1.05, capFactor: 1.10 },
-    { id: "css", name: "CSS", color: "#4f7fd1", url: "https://www.css.ch",
-      planNames: ["myFlex Balance", "myFlex Perfect", "myFlex Perfect Plus"],
-      premiumFactor: 1.00, capFactor: 0.95 },
-    { id: "sanitas", name: "Sanitas", color: "#e0a53e", url: "https://www.sanitas.com",
-      planNames: ["Vital Basic", "Vital Smart", "Vital Premium"],
-      premiumFactor: 1.02, capFactor: 1.15 },
-    { id: "swica", name: "Swica", color: "#d1618a", url: "https://www.swica.ch",
-      planNames: ["COMPLETA BASIC", "COMPLETA TOP", "COMPLETA TOP PLUS"],
-      premiumFactor: 1.08, capFactor: 1.05 },
-    { id: "atupri", name: "Atupri", color: "#8b7fd6", url: "https://www.atupri.ch",
-      planNames: ["Extra Ambulant", "Extra Comfort", "Extra Top"],
-      premiumFactor: 0.93, capFactor: 0.90 }
-  ];
-
-  var INSURERS = INSURER_CONFIG.map(function(cfg){
-    return {
-      id: cfg.id, name: cfg.name, color: cfg.color, url: cfg.url,
-      premiumFactor: cfg.premiumFactor, capFactor: cfg.capFactor,
-      tiers: BASE_TIERS.map(function(t, i){
-        var clone = JSON.parse(JSON.stringify(t));
-        clone.planName = cfg.planNames[i];
-        return clone;
-      })
-    };
-  });
 
   var COMFORT_RANK = { "general": 0, "semi-private": 1, "private": 2 };
   var COMFORT_LABEL = { "general": "General ward", "semi-private": "Semi-private ward", "private": "Private ward" };
@@ -319,50 +384,32 @@
     return "CHF " + v.toLocaleString("de-CH");
   }
 
-  function chfSigned(n){
-    var v = Math.round(n);
-    return (v >= 0 ? "+" : "") + chf(v);
-  }
-
   function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
 
   /* ---------------------------- calc engine ----------------------------- */
 
-  function computeReimbursement(needs, tier, capFactor){
+  function computeReimbursement(needs, tier){
     var breakdown = {};
-    var altCap = tier.altMed.cap * capFactor;
-    breakdown.altMed = Math.min((needs.altMedSpend || 0) * tier.altMed.percent / 100, altCap);
+    breakdown.altMed = Math.min((needs.altMedSpend || 0) * tier.altMed.percent / 100, tier.altMed.cap);
 
     var dentalSpend = needs.dentalNeed === "major" ? 4000 : (needs.dentalNeed === "routine" ? 800 : 0);
-    var dentalCap = tier.dental.cap * capFactor;
-    breakdown.dental = dentalSpend > 0 ? Math.min(dentalSpend * tier.dental.percent / 100, dentalCap) : 0;
+    breakdown.dental = dentalSpend > 0 ? Math.min(dentalSpend * tier.dental.percent / 100, tier.dental.cap) : 0;
 
-    var glassesCap = tier.glasses.amount * capFactor;
-    var glassesReimbPeriod = (needs.glassesSpend || 0) > 0 ? Math.min(needs.glassesSpend, glassesCap) : 0;
+    var glassesReimbPeriod = (needs.glassesSpend || 0) > 0 ? Math.min(needs.glassesSpend, tier.glasses.amount) : 0;
     breakdown.glasses = glassesReimbPeriod / tier.glasses.periodYears;
 
-    var gymCap = tier.gym.cap * capFactor;
-    breakdown.gym = (needs.gymSpend || 0) > 0 ? Math.min(needs.gymSpend, gymCap) : 0;
+    breakdown.gym = (needs.gymSpend || 0) > 0 ? Math.min((needs.gymSpend || 0) * tier.gym.percent / 100, tier.gym.cap) : 0;
 
-    breakdown.maternity = needs.pregnancy ? tier.maternity.amount * capFactor : 0;
+    breakdown.maternity = needs.pregnancy ? tier.maternity.amount : 0;
 
     var total = breakdown.altMed + breakdown.dental + breakdown.glasses + breakdown.gym + breakdown.maternity;
     return { total: total, breakdown: breakdown };
   }
 
-  function premiumMid(tier, band, premiumFactor){
-    return tier.basePremium[band] * premiumFactor;
-  }
-
-  function premiumRange(tier, band, premiumFactor){
-    var mid = premiumMid(tier, band, premiumFactor);
-    return [mid * 0.85, mid * 1.15];
-  }
-
-  function passesGating(tier, capFactor, needs){
-    if (needs.dentalNeed === "major" && tier.dental.cap * capFactor < 3000) return false;
-    if (COMFORT_RANK[tier.hospitalComfort] < COMFORT_RANK[needs.comfortPref]) return false;
-    return true;
+  function gateCheck(tier, needs){
+    var dentalOk = needs.dentalNeed !== "major" || tier.dental.cap >= 3000;
+    var comfortOk = COMFORT_RANK[tier.hospitalComfort] >= COMFORT_RANK[needs.comfortPref];
+    return { dentalOk: dentalOk, comfortOk: comfortOk, passes: dentalOk && comfortOk, score: (dentalOk ? 1 : 0) + (comfortOk ? 1 : 0) };
   }
 
   function recommendForPerson(member, needs){
@@ -372,38 +419,35 @@
 
     INSURERS.forEach(function(insurer){
       insurer.tiers.forEach(function(tier, idx){
-        var passes = passesGating(tier, insurer.capFactor, needs);
-        var reimb = computeReimbursement(needs, tier, insurer.capFactor);
-        var premium = premiumMid(tier, band, insurer.premiumFactor);
-        var range = premiumRange(tier, band, insurer.premiumFactor);
-        var netAnnual = premium * 12 - reimb.total;
+        var gate = gateCheck(tier, needs);
+        var reimb = computeReimbursement(needs, tier);
         candidates.push({
           insurerId: insurer.id,
           insurerName: insurer.name,
-          insurerColor: insurer.color,
           insurerUrl: insurer.url,
-          capFactor: insurer.capFactor,
+          insurerSourced: insurer.sourced,
+          insurerSourceLabel: insurer.sourceLabel,
           tierIndex: idx,
           tierLabel: tier.tier,
           planName: tier.planName,
           tierData: tier,
-          premium: premium,
-          premiumRange: range,
           reimbursement: reimb.total,
           breakdown: reimb.breakdown,
-          netAnnual: netAnnual,
-          passes: passes
+          passes: gate.passes,
+          gate: gate
         });
       });
     });
 
-    var passing = candidates.filter(function(c){ return c.passes; });
-    passing.sort(function(a, b){ return a.netAnnual - b.netAnnual; });
-    var best = passing[0] || candidates[0];
+    candidates.sort(function(a, b){
+      if (b.gate.score !== a.gate.score) return b.gate.score - a.gate.score;
+      return b.reimbursement - a.reimbursement;
+    });
+    var best = candidates[0];
     var sameInsurer = candidates.filter(function(c){ return c.insurerId === best.insurerId; });
     sameInsurer.sort(function(a, b){ return a.tierIndex - b.tierIndex; });
 
-    return { best: best, tiers: sameInsurer, band: band, age: age };
+    return { best: best, tiers: sameInsurer, band: band, age: age, fullMatch: best.passes };
   }
 
   /* -------------------------------- state -------------------------------- */
@@ -535,7 +579,7 @@
     return (
       '<div class="card">' +
         '<h2>Your household</h2>' +
-        '<p class="lede">Everyone at the same address shares one postal code. We\'ll use name, date of birth and sex to open each insurer\'s real calculator pre-filled, so the quote you see is theirs, not an estimate.</p>' +
+        '<p class="lede">Everyone at the same address shares one postal code. Date of birth and sex are what each insurer\'s own calculator needs for a real premium — we\'ll show them back to you on the results page to enter there.</p>' +
         '<div class="field" style="max-width:200px;">' +
           '<label>Postal code (NPA)</label>' +
           '<input type="text" inputmode="numeric" maxlength="4" placeholder="1000" value="' + esc(h.postalCode) + '" data-action="postal-code" />' +
@@ -605,7 +649,7 @@
             '<div class="field">' +
               '<label>Monthly premium (CHF)</label>' +
               '<input type="number" min="0" placeholder="e.g. 55" value="' + esc(c.monthlyPremium) + '" data-action="cov-premium" data-id="' + m.id + '" />' +
-              '<div class="helptext">Optional — used to estimate savings vs. your recommendation.</div>' +
+              '<div class="helptext">Optional — for your own reference when comparing quotes.</div>' +
             '</div>' +
           '</div>'
         ) : "") +
@@ -714,28 +758,27 @@
       return { member: m, rec: rec, coverage: state.coverage[m.id] };
     });
 
-    var totalPremium = results.reduce(function(sum, r){ return sum + r.rec.best.premium; }, 0);
     var totalReimb = results.reduce(function(sum, r){ return sum + r.rec.best.reimbursement; }, 0);
-    var totalNet = results.reduce(function(sum, r){ return sum + r.rec.best.netAnnual; }, 0);
+    var sourcedCount = INSURERS.filter(function(i){ return i.sourced; }).length;
 
     var html = "";
     html += (
       '<div class="disclaimer">' +
         '<span class="ico">&#9888;</span>' +
-        '<span>Plan names reflect real product families from each insurer\'s public range. ' +
-        'Reimbursement percentages, caps and premiums shown are <b>illustrative estimates</b> for simulation purposes only — ' +
-        'not verified against current contract fiches. Always confirm exact terms and get a binding quote on the insurer\'s own site before deciding.</span>' +
+        '<span>Plan names and reimbursement figures for ' + sourcedCount + ' of ' + INSURERS.length + ' insurers (Groupe Mutuel, Helsana, CSS, Sanitas, Swica) come from their own official 2025/26 brochures and conditions — flagged per plan where a brochure summarized rather than itemized a figure. ' +
+        'Atupri has no official documents yet and is marked <b>estimated, unverified</b>. ' +
+        '<b>Premiums are never estimated here</b> — postal code, date of birth and sex are collected only so you can enter them straight into each insurer\'s own calculator for a binding quote.</span>' +
       '</div>'
     );
 
     html += '<div class="card">';
     html += '<h2>Household summary</h2>';
-    html += '<p class="lede">Based on the recommended plan for each member.</p>';
+    html += '<p class="lede">Based on the plan that best covers each member\'s stated needs.</p>';
     html += (
       '<div class="summary-strip">' +
-        '<div class="summary-tile"><div class="label">Total monthly premium</div><div class="value">' + chf(totalPremium) + '</div></div>' +
-        '<div class="summary-tile"><div class="label">Est. annual reimbursement</div><div class="value good">' + chf(totalReimb) + '</div></div>' +
-        '<div class="summary-tile"><div class="label">Est. net annual cost</div><div class="value">' + chf(totalNet) + '</div></div>' +
+        '<div class="summary-tile"><div class="label">Household members</div><div class="value">' + h.members.length + '</div></div>' +
+        '<div class="summary-tile"><div class="label">Est. total annual reimbursement</div><div class="value good">' + chf(totalReimb) + '</div></div>' +
+        '<div class="summary-tile"><div class="label">Insurers officially sourced</div><div class="value">' + sourcedCount + ' / ' + INSURERS.length + '</div></div>' +
       '</div>'
     );
     html += '</div>';
@@ -758,9 +801,10 @@
   }
 
   function renderPersonResult(r){
-    var m = r.member, rec = r.rec, best = rec.best, cov = r.coverage;
+    var m = r.member, rec = r.rec, best = rec.best;
     var age = rec.age;
     var ageStr = age === null ? "" : (age + "y · " + rec.band);
+    var h = state.household;
 
     var breakdownChips = [];
     if (best.breakdown.altMed > 0) breakdownChips.push(["Alt. medicine", best.breakdown.altMed]);
@@ -772,19 +816,31 @@
       ? '<div class="breakdown-list">' + breakdownChips.map(function(c){
           return '<span class="chip">' + c[0] + ' <b>' + chf(c[1]) + '/yr</b></span>';
         }).join("") + '</div>'
-      : '<div class="helptext" style="margin:10px 0;">No specific ambulatory needs entered — this reflects a baseline recommendation.</div>';
+      : '<div class="helptext" style="margin:10px 0;">No specific ambulatory needs entered — this reflects a baseline match.</div>';
 
-    var savingsHtml = "";
-    var currentPremium = parseFloat(cov.monthlyPremium);
-    if (cov.hasComplementary && !isNaN(currentPremium) && currentPremium > 0){
-      var currentAnnualCost = currentPremium * 12;
-      var savings = currentAnnualCost - best.netAnnual;
-      var cls = savings >= 0 ? "pos" : "neg";
-      var verb = savings >= 0 ? "could save about" : "would cost about";
-      savingsHtml = (
-        '<div class="savings-note ' + cls + '">' +
-          'Vs. your current ' + chf(currentPremium) + '/mo, this recommendation ' + verb + ' ' +
-          chf(Math.abs(savings)) + '/year net.' +
+    var detailsBits = [];
+    if (m.birthDate) detailsBits.push("born " + m.birthDate);
+    if (m.sex) detailsBits.push(m.sex === "f" ? "female" : "male");
+    if (h.postalCode) detailsBits.push("NPA " + h.postalCode);
+    var quoteDetailsHtml = detailsBits.length
+      ? '<div class="helptext" style="margin:2px 0 14px;">For the calculator: ' + esc(detailsBits.join(", ")) + '</div>'
+      : "";
+
+    var sourceNote = best.insurerSourced
+      ? '<span class="helptext">Sourced from ' + esc(best.insurerSourceLabel) + '.</span>'
+      : '<span class="helptext" style="color:var(--warn);">Estimated, unverified — ' + esc(best.insurerSourceLabel) + '</span>';
+
+    var mismatchHtml = "";
+    if (!rec.fullMatch){
+      var memberNeeds = state.needs[m.id];
+      var unmet = [];
+      if (!best.gate.dentalOk) unmet.push("major dental work (dental and hospital-comfort riders are separate purchases at every insurer here)");
+      if (!best.gate.comfortOk) unmet.push("a " + memberNeeds.comfortPref + " ward");
+      mismatchHtml = (
+        '<div class="disclaimer" style="margin-bottom:14px;">' +
+          '<span class="ico">&#9888;</span>' +
+          '<span>No single plan on file fully covers everything requested here — this is the closest match, but it doesn\'t cover ' +
+          esc(unmet.join(" and ")) + '. You\'d likely need to combine this with a separate rider (e.g. a dental plan or a hospital-comfort upgrade) to get full coverage.</span>' +
         '</div>'
       );
     }
@@ -798,17 +854,18 @@
             '<div class="person-name">' + esc(m.name || "Household member") + '</div>' +
             '<div class="person-meta">' + esc(ageStr) + '</div>' +
           '</div>' +
-          '<div class="rec-badge">' + esc(best.insurerName) + ' — ' + esc(best.planName) + '</div>' +
+          '<div class="rec-badge">' + esc(best.insurerName) + ' — ' + esc(best.planName) + (best.insurerSourced ? "" : " (estimated)") + '</div>' +
         '</div>' +
 
-        '<div class="metric-row">' +
-          '<div class="metric"><div class="k">Monthly premium (est.)</div><div class="v">' + chf(best.premium) + '</div></div>' +
-          '<div class="metric"><div class="k">Est. annual reimbursement</div><div class="v" style="color:var(--success)">' + chf(best.reimbursement) + '</div></div>' +
-          '<div class="metric"><div class="k">Est. net annual cost</div><div class="v">' + chf(best.netAnnual) + '</div></div>' +
+        mismatchHtml +
+
+        '<div class="metric-row" style="grid-template-columns:1fr;">' +
+          '<div class="metric"><div class="k">Est. annual reimbursement for your stated needs</div><div class="v" style="color:var(--success)">' + chf(best.reimbursement) + '</div></div>' +
         '</div>' +
 
         chipsHtml +
-        savingsHtml +
+        quoteDetailsHtml +
+        '<div style="margin-bottom:10px;">' + sourceNote + '</div>' +
 
         '<div class="tier-table-wrap">' +
           '<table class="tier-table">' +
@@ -821,10 +878,14 @@
         '</div>' +
 
         '<a class="quote-link" href="' + best.insurerUrl + '" target="_blank" rel="noopener noreferrer">' +
-          'Get a real quote on ' + esc(best.insurerName) + '\'s site →' +
+          'Get your exact premium on ' + esc(best.insurerName) + '\'s calculator →' +
         '</a>' +
       '</div>'
     );
+  }
+
+  function capLabel(cap){
+    return cap >= 15000 ? "no published annual cap" : (chf(cap) + "/yr");
   }
 
   function buildTierTable(tiers, recommendedIdx){
@@ -833,7 +894,7 @@
       return (
         '<th class="' + hl + '">' +
           '<span class="tier-name">' + esc(t.planName) + '</span>' +
-          (i === recommendedIdx ? '<span class="tier-recommended-tag">RECOMMENDED</span>' : "") +
+          (i === recommendedIdx ? '<span class="tier-recommended-tag">BEST MATCH</span>' : "") +
         '</th>'
       );
     }).join("");
@@ -847,24 +908,23 @@
     }
 
     var bodyRows = "";
-    bodyRows += row("Monthly premium (est. range)", function(t){
-      var range = premiumRange(t.tierData, "adult", 1); // display shape only, real range computed per-tier below
-      return "~" + chf(t.premiumRange[0]) + "–" + chf(t.premiumRange[1]);
-    });
     bodyRows += row("Alternative medicine", function(t){
-      return t.tierData.altMed.percent + "% up to " + chf(t.tierData.altMed.cap * t.capFactor) + "/yr";
+      return t.tierData.altMed.cap === 0 ? "Not covered" : (t.tierData.altMed.percent + "% up to " + capLabel(t.tierData.altMed.cap));
     });
     bodyRows += row("Dental", function(t){
-      return t.tierData.dental.cap === 0 ? "Not covered" : (t.tierData.dental.percent + "% up to " + chf(t.tierData.dental.cap * t.capFactor));
+      return t.tierData.dental.cap === 0 ? "Not covered (adult)" : (t.tierData.dental.percent + "% up to " + capLabel(t.tierData.dental.cap));
     });
     bodyRows += row("Glasses / lenses", function(t){
-      return chf(t.tierData.glasses.amount * t.capFactor) + " / " + t.tierData.glasses.periodYears + "yrs";
+      return t.tierData.glasses.amount === 0 ? "Not covered" : (chf(t.tierData.glasses.amount) + " / " + t.tierData.glasses.periodYears + "yr" + (t.tierData.glasses.periodYears > 1 ? "s" : ""));
     });
     bodyRows += row("Gym / fitness", function(t){
-      return "up to " + chf(t.tierData.gym.cap * t.capFactor) + "/yr";
+      return t.tierData.gym.cap === 0 ? "Not covered" : (t.tierData.gym.percent + "% up to " + chf(t.tierData.gym.cap) + "/yr");
     });
     bodyRows += row("Hospital comfort", function(t){
       return COMFORT_LABEL[t.tierData.hospitalComfort];
+    });
+    bodyRows += row("Maternity", function(t){
+      return t.tierData.maternity.amount > 0 ? chf(t.tierData.maternity.amount) + " lump sum" : "Covered as ordinary treatment";
     });
     bodyRows += row("Travel / emergency abroad", function(t){
       return t.tierData.travel ? "Included" : "—";
