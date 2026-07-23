@@ -1237,10 +1237,18 @@
     });
 
     app.querySelectorAll('[data-action="member-birthdate"]').forEach(function(el){
+      // Chromium fires "input"/"change" on this field as soon as it has SOME
+      // parseable value — e.g. after just the first digit of the year, long
+      // before the user is done typing. Re-rendering (which replaces this
+      // input's DOM node) on those events wipes the browser's in-progress
+      // per-segment typing state. So we track the value live but only
+      // re-render once the user actually leaves the field.
       el.addEventListener("input", function(){
         var id = el.getAttribute("data-id");
         var m = findMember(id);
         if (m) m.birthDate = el.value;
+      });
+      el.addEventListener("blur", function(){
         render();
       });
     });
