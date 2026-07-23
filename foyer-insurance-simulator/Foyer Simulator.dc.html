@@ -874,7 +874,7 @@
       el.addEventListener("input", function(){
         state.household.postalCode = el.value.replace(/\D/g, "").slice(0, 4);
         render();
-        focusEl('[data-action="postal-code"]');
+        focusEl('[data-action="postal-code"]', true);
       });
     });
 
