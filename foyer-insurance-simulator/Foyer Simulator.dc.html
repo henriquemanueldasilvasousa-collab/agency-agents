@@ -80,6 +80,9 @@
     transition:border-color .15s;
   }
   input:focus, select:focus{border-color:var(--accent);}
+  .toggle-btn:focus-visible, .tab:focus-visible, .plan-details summary:focus-visible{
+    outline:2px solid var(--accent-2);outline-offset:2px;
+  }
   input::placeholder{color:var(--text-faint);}
   .field{margin-bottom:16px;}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
@@ -871,16 +874,16 @@
           removeBtn +
           '<div class="row3">' +
             '<div class="field">' +
-              '<label>Full name</label>' +
-              '<input type="text" placeholder="e.g. Alex Meier" value="' + esc(m.name) + '" data-action="member-name" data-id="' + m.id + '" />' +
+              '<label for="member-name-' + m.id + '">Full name</label>' +
+              '<input id="member-name-' + m.id + '" type="text" placeholder="e.g. Alex Meier" value="' + esc(m.name) + '" data-action="member-name" data-id="' + m.id + '" />' +
             '</div>' +
             '<div class="field">' +
-              '<label>Date of birth</label>' +
-              '<input type="date" value="' + esc(m.birthDate) + '" max="' + todayISO() + '" data-action="member-birthdate" data-id="' + m.id + '" />' +
+              '<label for="member-birthdate-' + m.id + '">Date of birth</label>' +
+              '<input id="member-birthdate-' + m.id + '" type="date" value="' + esc(m.birthDate) + '" max="' + todayISO() + '" data-action="member-birthdate" data-id="' + m.id + '" />' +
             '</div>' +
             '<div class="field">' +
-              '<label>Sex</label>' +
-              '<select data-action="member-sex" data-id="' + m.id + '">' + sexOptions + '</select>' +
+              '<label for="member-sex-' + m.id + '">Sex</label>' +
+              '<select id="member-sex-' + m.id + '" data-action="member-sex" data-id="' + m.id + '">' + sexOptions + '</select>' +
               '<div class="helptext">Required by insurers\' own premium calculators.</div>' +
             '</div>' +
           '</div>' +
@@ -893,8 +896,8 @@
         '<h2>Your household</h2>' +
         '<p class="lede">Everyone at the same address shares one postal code. Date of birth and sex are what each insurer\'s own calculator needs for a real premium — we\'ll show them back to you on the results page to enter there.</p>' +
         '<div class="field" style="max-width:200px;">' +
-          '<label>Postal code (NPA)</label>' +
-          '<input type="text" inputmode="numeric" maxlength="4" placeholder="1000" value="' + esc(h.postalCode) + '" data-action="postal-code" />' +
+          '<label for="postal-code">Postal code (NPA / PLZ)</label>' +
+          '<input id="postal-code" type="text" inputmode="numeric" maxlength="4" placeholder="1000" value="' + esc(h.postalCode) + '" data-action="postal-code" />' +
         '</div>' +
         '<div class="section-title">Members</div>' +
         membersHtml +
@@ -916,10 +919,10 @@
 
   function renderMemberTabs(step){
     var h = state.household;
-    return '<div class="tabbar">' + h.members.map(function(m){
+    return '<div class="tabbar" role="tablist">' + h.members.map(function(m){
       var active = state.activeTab[step] === m.id;
       var label = m.name.trim() || "Member";
-      return '<div class="tab ' + (active ? "active" : "") + '" data-action="tab" data-step="' + step + '" data-id="' + m.id + '">' + esc(label) + '</div>';
+      return '<div class="tab ' + (active ? "active" : "") + '" role="tab" aria-selected="' + active + '" tabindex="0" data-action="tab" data-step="' + step + '" data-id="' + m.id + '">' + esc(label) + '</div>';
     }).join("") + '</div>';
   }
 
@@ -961,9 +964,9 @@
         }).join("");
         return (g.group ? '<div class="plan-group-label">' + esc(g.group) + '</div>' : "") + '<div class="plan-check-grid">' + itemsHtml + '</div>';
       }).join("");
-      planFieldHtml = '<div class="plan-checklist">' + checklistHtml + '</div>';
+      planFieldHtml = '<div class="plan-checklist" role="group" aria-labelledby="cov-plan-label-' + m.id + '">' + checklistHtml + '</div>';
     } else {
-      planFieldHtml = '<input type="text" placeholder="e.g. COMPLETA" value="' + esc(c.planNames[0] || "") + '" data-action="cov-plan-text" data-id="' + m.id + '" />';
+      planFieldHtml = '<input id="cov-plan-text-' + m.id + '" type="text" placeholder="e.g. COMPLETA" value="' + esc(c.planNames[0] || "") + '" data-action="cov-plan-text" data-id="' + m.id + '" />';
     }
 
     return (
@@ -971,22 +974,22 @@
         '<h2>Current coverage</h2>' +
         '<p class="lede">Tell us what each person already has, if anything. This lets us estimate potential savings.</p>' +
         renderMemberTabs(2) +
-        '<div class="toggle-row" style="margin-bottom:18px;">' +
-          '<div class="toggle-btn ' + (c.hasComplementary ? "" : "active") + '" data-action="cov-has" data-id="' + m.id + '" data-value="false">No complementary insurance</div>' +
-          '<div class="toggle-btn ' + (c.hasComplementary ? "active" : "") + '" data-action="cov-has" data-id="' + m.id + '" data-value="true">Has complementary insurance</div>' +
+        '<div class="toggle-row" style="margin-bottom:18px;" role="radiogroup" aria-label="Complementary insurance status">' +
+          '<div class="toggle-btn ' + (c.hasComplementary ? "" : "active") + '" role="radio" aria-checked="' + (!c.hasComplementary) + '" tabindex="0" data-action="cov-has" data-id="' + m.id + '" data-value="false">No complementary insurance</div>' +
+          '<div class="toggle-btn ' + (c.hasComplementary ? "active" : "") + '" role="radio" aria-checked="' + c.hasComplementary + '" tabindex="0" data-action="cov-has" data-id="' + m.id + '" data-value="true">Has complementary insurance</div>' +
         '</div>' +
         (c.hasComplementary ? (
           '<div class="field">' +
-            '<label>Current insurer</label>' +
-            '<select data-action="cov-insurer" data-id="' + m.id + '" style="max-width:320px;">' + insurerOptions + '</select>' +
+            '<label for="cov-insurer-' + m.id + '">Current insurer</label>' +
+            '<select id="cov-insurer-' + m.id + '" data-action="cov-insurer" data-id="' + m.id + '" style="max-width:320px;">' + insurerOptions + '</select>' +
           '</div>' +
           '<div class="field">' +
-            '<label>Plan(s) held' + (knownInsurer ? ' — select all that apply' : '') + '</label>' +
+            '<label id="cov-plan-label-' + m.id + '"' + (knownInsurer ? '' : ' for="cov-plan-text-' + m.id + '"') + '>Plan(s) held' + (knownInsurer ? ' — select all that apply' : '') + '</label>' +
             planFieldHtml +
           '</div>' +
           '<div class="field" style="max-width:220px;">' +
-            '<label>Total monthly premium (CHF)</label>' +
-            '<input type="text" inputmode="decimal" placeholder="e.g. 55" value="' + esc(c.monthlyPremium) + '" data-action="cov-premium" data-id="' + m.id + '" />' +
+            '<label for="cov-premium-' + m.id + '">Total monthly premium (CHF)</label>' +
+            '<input id="cov-premium-' + m.id + '" type="text" inputmode="decimal" placeholder="e.g. 55" value="' + esc(c.monthlyPremium) + '" data-action="cov-premium" data-id="' + m.id + '" />' +
             '<div class="helptext">Combined across everything selected above — optional, for your own reference.</div>' +
           '</div>'
         ) : "") +
@@ -1014,7 +1017,7 @@
     ];
 
     function selectHtml(action, id, opts, current){
-      return '<select data-action="' + action + '" data-id="' + id + '">' + opts.map(function(o){
+      return '<select id="' + action + '-' + id + '" data-action="' + action + '" data-id="' + id + '">' + opts.map(function(o){
         return '<option value="' + o[0] + '" ' + (current === o[0] ? "selected" : "") + '>' + o[1] + '</option>';
       }).join("") + '</select>';
     }
@@ -1027,37 +1030,37 @@
 
         '<div class="row2">' +
           '<div class="field">' +
-            '<label>Annual gym / fitness spend (CHF)</label>' +
-            '<input type="text" inputmode="decimal" value="' + esc(n.gymSpend) + '" data-action="need-gymSpend" data-id="' + m.id + '" />' +
+            '<label for="need-gymSpend-' + m.id + '">Annual gym / fitness spend (CHF)</label>' +
+            '<input id="need-gymSpend-' + m.id + '" type="text" inputmode="decimal" value="' + esc(n.gymSpend) + '" data-action="need-gymSpend" data-id="' + m.id + '" />' +
           '</div>' +
           '<div class="field">' +
-            '<label>Glasses / contact lenses, next 2 years (CHF)</label>' +
-            '<input type="text" inputmode="decimal" value="' + esc(n.glassesSpend) + '" data-action="need-glassesSpend" data-id="' + m.id + '" />' +
+            '<label for="need-glassesSpend-' + m.id + '">Glasses / contact lenses, next 2 years (CHF)</label>' +
+            '<input id="need-glassesSpend-' + m.id + '" type="text" inputmode="decimal" value="' + esc(n.glassesSpend) + '" data-action="need-glassesSpend" data-id="' + m.id + '" />' +
           '</div>' +
         '</div>' +
 
         '<div class="row2">' +
           '<div class="field">' +
-            '<label>Alternative medicine spend / year (CHF)</label>' +
-            '<input type="text" inputmode="decimal" value="' + esc(n.altMedSpend) + '" data-action="need-altMedSpend" data-id="' + m.id + '" />' +
+            '<label for="need-altMedSpend-' + m.id + '">Alternative medicine spend / year (CHF)</label>' +
+            '<input id="need-altMedSpend-' + m.id + '" type="text" inputmode="decimal" value="' + esc(n.altMedSpend) + '" data-action="need-altMedSpend" data-id="' + m.id + '" />' +
             '<div class="helptext">Osteopathy, homeopathy, acupuncture, TCM…</div>' +
           '</div>' +
           '<div class="field">' +
-            '<label>Hospital comfort preference</label>' +
+            '<label for="need-comfortPref-' + m.id + '">Hospital comfort preference</label>' +
             selectHtml("need-comfortPref", m.id, comfortOptions, n.comfortPref) +
           '</div>' +
         '</div>' +
 
         '<div class="field" style="max-width:280px;">' +
-          '<label>Travel abroad</label>' +
+          '<label for="need-travelFrequency-' + m.id + '">Travel abroad</label>' +
           selectHtml("need-travelFrequency", m.id, travelOptions, n.travelFrequency) +
         '</div>' +
 
         '<div class="field" style="max-width:280px;">' +
-          '<label>Planning a pregnancy in the next year?</label>' +
-          '<div class="toggle-row">' +
-            '<div class="toggle-btn ' + (!n.pregnancy ? "active" : "") + '" data-action="need-pregnancy" data-id="' + m.id + '" data-value="false">No</div>' +
-            '<div class="toggle-btn ' + (n.pregnancy ? "active" : "") + '" data-action="need-pregnancy" data-id="' + m.id + '" data-value="true">Yes</div>' +
+          '<label id="pregnancy-label-' + m.id + '">Planning a pregnancy in the next year?</label>' +
+          '<div class="toggle-row" role="radiogroup" aria-labelledby="pregnancy-label-' + m.id + '">' +
+            '<div class="toggle-btn ' + (!n.pregnancy ? "active" : "") + '" role="radio" aria-checked="' + (!n.pregnancy) + '" tabindex="0" data-action="need-pregnancy" data-id="' + m.id + '" data-value="false">No</div>' +
+            '<div class="toggle-btn ' + (n.pregnancy ? "active" : "") + '" role="radio" aria-checked="' + n.pregnancy + '" tabindex="0" data-action="need-pregnancy" data-id="' + m.id + '" data-value="true">Yes</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -1475,12 +1478,12 @@
           '<div class="section-title" style="margin:16px 0 8px;">Report your real quote for ' + esc(insurer ? insurer.name : insurerId) + '</div>' +
           '<div class="row2">' +
             '<div class="field" style="margin-bottom:8px;">' +
-              '<label>Plan</label>' +
-              '<select data-action="quote-tier" data-id="' + m.id + '" data-insurer="' + insurerId + '">' + tierOptions + '</select>' +
+              '<label for="quote-tier-' + m.id + '-' + insurerId + '">Plan</label>' +
+              '<select id="quote-tier-' + m.id + '-' + insurerId + '" data-action="quote-tier" data-id="' + m.id + '" data-insurer="' + insurerId + '">' + tierOptions + '</select>' +
             '</div>' +
             '<div class="field" style="margin-bottom:8px;">' +
-              '<label>Monthly premium (CHF)</label>' +
-              '<input type="text" inputmode="decimal" placeholder="e.g. 62.40" value="' + esc(qf.premium) + '" data-action="quote-premium" data-id="' + m.id + '" data-insurer="' + insurerId + '" />' +
+              '<label for="quote-premium-' + m.id + '-' + insurerId + '">Monthly premium (CHF)</label>' +
+              '<input id="quote-premium-' + m.id + '-' + insurerId + '" type="text" inputmode="decimal" placeholder="e.g. 62.40" value="' + esc(qf.premium) + '" data-action="quote-premium" data-id="' + m.id + '" data-insurer="' + insurerId + '" />' +
             '</div>' +
           '</div>' +
           '<button class="btn btn-primary btn-sm" data-action="quote-save" data-id="' + m.id + '" data-insurer="' + insurerId + '" ' + (qf.premium && qf.status !== "saving" ? "" : "disabled") + '>Save quote</button>' +
@@ -1792,6 +1795,22 @@
   }
 
   render();
+
+  // .toggle-btn and .tab are plain divs (not <button>/<input>) so they can
+  // carry custom active-state styling without fighting native control
+  // chrome, but that means keyboard users get nothing by default — no
+  // built-in Enter/Space activation. Bound once on the outer #app element
+  // (which render() never replaces — only its innerHTML) rather than
+  // per-render, since attachHandlers() rebinds every other listener from
+  // scratch on every render and doing that here would stack duplicate
+  // listeners.
+  document.getElementById("app").addEventListener("keydown", function(e){
+    if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+    var target = e.target.closest && e.target.closest(".toggle-btn, .tab");
+    if (!target) return;
+    e.preventDefault();
+    target.click();
+  });
 
   // Native <details> hides its content whenever collapsed, and that can't
   // be reliably forced open with CSS alone across browsers (Chromium's
