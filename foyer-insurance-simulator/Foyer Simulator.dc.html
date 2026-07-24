@@ -317,20 +317,19 @@
       ],
       tiers: [
         { tier: "Niveau 1", planName: "Global smart Niveau 1",
-          altMed: { percent: 30, cap: 20000 }, dental: { percent: 0, cap: 0 },
+          altMed: { percent: 30, cap: 20000 },
           glasses: { amount: 150, periodYears: 3 }, gym: { percent: 50, cap: 200 },
           hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
-          note: "Alternative medicine has no published annual ceiling in the CP — treated as uncapped. Dental: none. Maternity covered as ordinary treatment after a 12-month waiting period, not a fixed payout." },
+          note: "Alternative medicine has no published annual ceiling in the CP — treated as uncapped. Maternity covered as ordinary treatment after a 12-month waiting period, not a fixed payout." },
         { tier: "Niveau 2", planName: "Global smart Niveau 2",
-          altMed: { percent: 60, cap: 20000 }, dental: { percent: 50, cap: 500 },
+          altMed: { percent: 60, cap: 20000 },
           glasses: { amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
-          hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
-          note: "Dental figure is the adult (19+) rate; under-19 cap is CHF 2000." },
+          hospitalComfort: "general", maternity: { amount: 0 }, travel: true },
         { tier: "Niveau 3", planName: "Global smart Niveau 3",
-          altMed: { percent: 90, cap: 20000 }, dental: { percent: 50, cap: 1000 },
+          altMed: { percent: 90, cap: 20000 },
           glasses: { amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
           hospitalComfort: "private", maternity: { amount: 0 }, travel: true,
-          note: "Hospital division is semi-private or private, assured's choice, per the policy. Dental figure is the adult (19+) rate; under-19 cap is CHF 2000." }
+          note: "Hospital division is semi-private or private, assured's choice, per the policy." }
       ]
     },
     {
@@ -342,17 +341,17 @@
       ],
       tiers: [
         { tier: "Essential", planName: "TOP",
-          altMed: { percent: 0, cap: 0 }, dental: { percent: 75, cap: 10000 },
+          altMed: { percent: 0, cap: 0 },
           glasses: { amount: 150, periodYears: 1 }, gym: { percent: 0, cap: 0 },
           hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
-          note: "TOP's real focus is orthodontics/eyewear/travel, not alternative medicine or fitness — the brochure doesn't itemize those for TOP. Dental cap is the orthodontics benefit (to age 20), not general adult dental. Hospital ward comfort (Helsana's separate HOSPITAL product) isn't in this document set." },
+          note: "TOP's real focus is orthodontics/eyewear/travel, not alternative medicine or fitness — the brochure doesn't itemize those for TOP. Hospital ward comfort (Helsana's separate HOSPITAL product) isn't in this document set." },
         { tier: "Balanced", planName: "COMPLETA",
-          altMed: { percent: 75, cap: 3000 }, dental: { percent: 75, cap: 10000 },
+          altMed: { percent: 75, cap: 3000 },
           glasses: { amount: 300, periodYears: 1 }, gym: { percent: 75, cap: 200 },
           hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
           note: "Alt-medicine annual cap is approximate: the brochure gives 75% ambulatory reimbursement but only states an explicit ceiling (CHF 5000) for inpatient complementary-medicine care, not outpatient. Marked as Helsana's “Topseller” in its own materials." },
         { tier: "Premium", planName: "COMPLETA + COMPLETA PLUS",
-          altMed: { percent: 90, cap: 4000 }, dental: { percent: 75, cap: 10000 },
+          altMed: { percent: 90, cap: 4000 },
           glasses: { amount: 500, periodYears: 1 }, gym: { percent: 75, cap: 400 },
           hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
           note: "COMPLETA PLUS is an add-on sold only in combination with COMPLETA — figures here are the two products' caps combined. Alt-medicine cap is approximate for the same reason as COMPLETA." }
@@ -363,17 +362,17 @@
       sourced: true, sourceLabel: "myFlex product brochure (Form. 517f–08.25) + Ambulatoire/Hospitalisation/Médecine alternative myFlex tables",
       tiers: [
         { tier: "Economy", planName: "myFlex Economy",
-          altMed: { percent: 75, cap: 1000 }, dental: { percent: 0, cap: 0 },
+          altMed: { percent: 75, cap: 1000 },
           glasses: { amount: 0, periodYears: 1 }, gym: { percent: 50, cap: 300 },
           hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
-          note: "myFlex bundles 3 separate products (Ambulatoire, Hospitalisation, Médecine alternative myFlex); this row combines their Economy levels. General adult dental isn't covered by any myFlex tier (only child orthodontics), matching the real CGA. Hospital ward (general/semi-private/private) isn't tabulated per tier in the brochure — inferred from CSS's own “choose your comfort level” marketing copy." },
+          note: "myFlex bundles 3 separate products (Ambulatoire, Hospitalisation, Médecine alternative myFlex); this row combines their Economy levels. Hospital ward (general/semi-private/private) isn't tabulated per tier in the brochure — inferred from CSS's own “choose your comfort level” marketing copy." },
         { tier: "Balance", planName: "myFlex Balance",
-          altMed: { percent: 75, cap: 3000 }, dental: { percent: 0, cap: 0 },
+          altMed: { percent: 75, cap: 3000 },
           glasses: { amount: 150, periodYears: 1 }, gym: { percent: 50, cap: 500 },
           hospitalComfort: "semi-private", maternity: { amount: 1500 }, travel: true,
           note: "Hospital ward inferred (see Economy note)." },
         { tier: "Premium", planName: "myFlex Premium",
-          altMed: { percent: 75, cap: 10000 }, dental: { percent: 0, cap: 0 },
+          altMed: { percent: 75, cap: 10000 },
           glasses: { amount: 300, periodYears: 1 }, gym: { percent: 50, cap: 700 },
           hospitalComfort: "private", maternity: { amount: 2000 }, travel: true,
           note: "Hospital ward inferred (see Economy note)." }
@@ -384,20 +383,20 @@
       sourced: true, sourceLabel: "Vital product sheet, ed. 9046 02.26",
       tiers: [
         { tier: "Basic", planName: "Vital Basic",
-          altMed: { percent: 0, cap: 0 }, dental: { percent: 50, cap: 10000 },
+          altMed: { percent: 0, cap: 0 },
           glasses: { amount: 300, periodYears: 3 }, gym: { percent: 0, cap: 0 },
           hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
-          note: "Dental figure is Vital's orthodontics benefit (to age 20), not general adult dental — Sanitas sells adult dental as a separate product. Vital doesn't include a hospital ward upgrade at any tier; that's Sanitas' separate Hospital Extra/Top Liberty product." },
+          note: "Vital doesn't include a hospital ward upgrade at any tier; that's Sanitas' separate Hospital Extra/Top Liberty product." },
         { tier: "Smart", planName: "Vital Smart",
-          altMed: { percent: 80, cap: 5000 }, dental: { percent: 50, cap: 30000 },
+          altMed: { percent: 80, cap: 5000 },
           glasses: { amount: 300, periodYears: 3 }, gym: { percent: 50, cap: 600 },
           hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
-          note: "Alt-medicine cap picked from Sanitas' two customer-selectable options (CHF 2500 or 5000). Dental (orthodontics) is stated as uncapped — CHF 30’000 stands in for “no ceiling”. Same hospital-ward caveat as Basic." },
+          note: "Alt-medicine cap picked from Sanitas' two customer-selectable options (CHF 2500 or 5000). Same hospital-ward caveat as Basic." },
         { tier: "Premium", planName: "Vital Premium",
-          altMed: { percent: 80, cap: 10000 }, dental: { percent: 80, cap: 30000 },
+          altMed: { percent: 80, cap: 10000 },
           glasses: { amount: 600, periodYears: 3 }, gym: { percent: 80, cap: 800 },
           hospitalComfort: "general", maternity: { amount: 2000 }, travel: true,
-          note: "Dental (orthodontics) uncapped, see Smart note. Same hospital-ward caveat as Basic." }
+          note: "Same hospital-ward caveat as Basic." }
       ]
     },
     {
@@ -414,17 +413,17 @@
       ],
       tiers: [
         { tier: "Top", planName: "COMPLETA TOP",
-          altMed: { percent: 100, cap: 1600 }, dental: { percent: 0, cap: 0 },
+          altMed: { percent: 100, cap: 1600 },
           glasses: { amount: 200, periodYears: 3 }, gym: { percent: 90, cap: 500 },
           hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
-          note: "Swica reimburses alt-medicine as “up to CHF 80/hour” rather than %+annual cap — the figure here approximates a typical ~20 sessions/year. General adult dental is sold separately as Denta (not modeled). Hospital ward requires Swica's separate Hospita product, not bundled into COMPLETA." },
+          note: "Swica reimburses alt-medicine as “up to CHF 80/hour” rather than %+annual cap — the figure here approximates a typical ~20 sessions/year. Hospital ward requires Swica's separate Hospita product, not bundled into COMPLETA." },
         { tier: "Forte", planName: "COMPLETA FORTE",
-          altMed: { percent: 100, cap: 2400 }, dental: { percent: 0, cap: 0 },
+          altMed: { percent: 100, cap: 2400 },
           glasses: { amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
           hospitalComfort: "general", maternity: { amount: 650 }, travel: true,
           note: "Alt-medicine cap approximated the same way as TOP, at Forte's CHF 120/hour rate." },
         { tier: "Forte + Hospita Privée", planName: "COMPLETA FORTE + HOSPITA PRIVÉE",
-          altMed: { percent: 100, cap: 2400 }, dental: { percent: 0, cap: 0 },
+          altMed: { percent: 100, cap: 2400 },
           glasses: { amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
           hospitalComfort: "private", maternity: { amount: 650 }, travel: true,
           note: "Represents COMPLETA FORTE combined with Swica's separate Hospita Privée hospital product, as households commonly buy them together." }
@@ -435,15 +434,15 @@
       sourced: false, sourceLabel: "No official Atupri documents supplied yet — figures are estimates from public web research, not verified against a fiche/CGA",
       tiers: [
         { tier: "Basic", planName: "Basic",
-          altMed: { percent: 0, cap: 0 }, dental: { percent: 0, cap: 0 },
+          altMed: { percent: 0, cap: 0 },
           glasses: { amount: 0, periodYears: 1 }, gym: { percent: 75, cap: 200 },
           hospitalComfort: "general", maternity: { amount: 0 }, travel: true, note: "Estimate, unverified." },
         { tier: "Mivita Reala", planName: "Mivita Reala",
-          altMed: { percent: 50, cap: 1500 }, dental: { percent: 0, cap: 0 },
+          altMed: { percent: 50, cap: 1500 },
           glasses: { amount: 0, periodYears: 1 }, gym: { percent: 50, cap: 300 },
           hospitalComfort: "general", maternity: { amount: 300 }, travel: true, note: "Estimate, unverified." },
         { tier: "Intense", planName: "Intense",
-          altMed: { percent: 50, cap: 1500 }, dental: { percent: 0, cap: 0 },
+          altMed: { percent: 50, cap: 1500 },
           glasses: { amount: 350, periodYears: 1 }, gym: { percent: 50, cap: 300 },
           hospitalComfort: "general", maternity: { amount: 1000 }, travel: true, note: "Estimate, unverified." }
       ]
@@ -525,9 +524,6 @@
     var breakdown = {};
     breakdown.altMed = Math.min((needs.altMedSpend || 0) * tier.altMed.percent / 100, tier.altMed.cap);
 
-    var dentalSpend = needs.dentalNeed === "major" ? 4000 : (needs.dentalNeed === "routine" ? 800 : 0);
-    breakdown.dental = dentalSpend > 0 ? Math.min(dentalSpend * tier.dental.percent / 100, tier.dental.cap) : 0;
-
     var glassesReimbPeriod = (needs.glassesSpend || 0) > 0 ? Math.min(needs.glassesSpend, tier.glasses.amount) : 0;
     breakdown.glasses = glassesReimbPeriod / GLASSES_WINDOW_YEARS;
 
@@ -535,14 +531,13 @@
 
     breakdown.maternity = needs.pregnancy ? tier.maternity.amount : 0;
 
-    var total = breakdown.altMed + breakdown.dental + breakdown.glasses + breakdown.gym + breakdown.maternity;
+    var total = breakdown.altMed + breakdown.glasses + breakdown.gym + breakdown.maternity;
     return { total: total, breakdown: breakdown };
   }
 
   function gateCheck(tier, needs){
-    var dentalOk = needs.dentalNeed !== "major" || tier.dental.cap >= 3000;
     var comfortOk = COMFORT_RANK[tier.hospitalComfort] >= COMFORT_RANK[needs.comfortPref];
-    return { dentalOk: dentalOk, comfortOk: comfortOk, passes: dentalOk && comfortOk, score: (dentalOk ? 1 : 0) + (comfortOk ? 1 : 0) };
+    return { comfortOk: comfortOk, passes: comfortOk, score: comfortOk ? 1 : 0 };
   }
 
   function recommendForPerson(member, needs){
@@ -738,7 +733,7 @@
     [m1, m2].forEach(function(m){
       coverage[m.id] = { hasComplementary: false, insurerId: "", planNames: [], monthlyPremium: "" };
       needs[m.id] = {
-        gymSpend: 0, glassesSpend: 0, dentalNeed: "none", altMedSpend: 0,
+        gymSpend: 0, glassesSpend: 0, altMedSpend: 0,
         comfortPref: "general", pregnancy: false, travelFrequency: "rarely"
       };
     });
@@ -758,7 +753,7 @@
   function ensureMemberData(id){
     if (!state.coverage[id]) state.coverage[id] = { hasComplementary: false, insurerId: "", planNames: [], monthlyPremium: "" };
     if (!state.needs[id]) state.needs[id] = {
-      gymSpend: 0, glassesSpend: 0, dentalNeed: "none", altMedSpend: 0,
+      gymSpend: 0, glassesSpend: 0, altMedSpend: 0,
       comfortPref: "general", pregnancy: false, travelFrequency: "rarely"
     };
     if (!state.quoteForm[id]) state.quoteForm[id] = {};
@@ -995,11 +990,6 @@
     ensureMemberData(m.id);
     var n = state.needs[m.id];
 
-    var dentalOptions = [
-      ["none", "None expected"],
-      ["routine", "Routine care"],
-      ["major", "Major work (orthodontics, implants…)"]
-    ];
     var comfortOptions = [
       ["general", "General ward"],
       ["semi-private", "Semi-private room"],
@@ -1036,25 +1026,19 @@
 
         '<div class="row2">' +
           '<div class="field">' +
-            '<label>Dental care expected</label>' +
-            selectHtml("need-dentalNeed", m.id, dentalOptions, n.dentalNeed) +
-          '</div>' +
-          '<div class="field">' +
             '<label>Alternative medicine spend / year (CHF)</label>' +
             '<input type="text" inputmode="decimal" value="' + esc(n.altMedSpend) + '" data-action="need-altMedSpend" data-id="' + m.id + '" />' +
             '<div class="helptext">Osteopathy, homeopathy, acupuncture, TCM…</div>' +
           '</div>' +
-        '</div>' +
-
-        '<div class="row2">' +
           '<div class="field">' +
             '<label>Hospital comfort preference</label>' +
             selectHtml("need-comfortPref", m.id, comfortOptions, n.comfortPref) +
           '</div>' +
-          '<div class="field">' +
-            '<label>Travel abroad</label>' +
-            selectHtml("need-travelFrequency", m.id, travelOptions, n.travelFrequency) +
-          '</div>' +
+        '</div>' +
+
+        '<div class="field" style="max-width:280px;">' +
+          '<label>Travel abroad</label>' +
+          selectHtml("need-travelFrequency", m.id, travelOptions, n.travelFrequency) +
         '</div>' +
 
         '<div class="field" style="max-width:280px;">' +
@@ -1227,7 +1211,6 @@
 
     var breakdownChips = [];
     if (breakdownSource.altMed > 0) breakdownChips.push(["Alt. medicine", breakdownSource.altMed]);
-    if (breakdownSource.dental > 0) breakdownChips.push(["Dental", breakdownSource.dental]);
     if (breakdownSource.glasses > 0) breakdownChips.push(["Glasses", breakdownSource.glasses]);
     if (breakdownSource.gym > 0) breakdownChips.push(["Gym/fitness", breakdownSource.gym]);
     if (breakdownSource.maternity > 0) breakdownChips.push(["Maternity", breakdownSource.maternity]);
@@ -1244,14 +1227,11 @@
     var mismatchHtml = "";
     if (!candidate.passes){
       var memberNeeds = state.needs[m.id];
-      var unmet = [];
-      if (!candidate.gate.dentalOk) unmet.push("major dental work (dental and hospital-comfort riders are separate purchases at every insurer here)");
-      if (!candidate.gate.comfortOk) unmet.push("a " + memberNeeds.comfortPref + " ward");
       mismatchHtml = (
         '<div class="disclaimer" style="margin-bottom:14px;">' +
           '<span class="ico">&#9888;</span>' +
-          '<span>This plan doesn\'t cover ' + esc(unmet.join(" and ")) +
-          '. You\'d likely need to combine it with a separate rider (e.g. a dental plan or a hospital-comfort upgrade) to get full coverage.</span>' +
+          '<span>This plan doesn\'t cover a ' + esc(memberNeeds.comfortPref) + ' ward' +
+          '. You\'d likely need to combine it with a separate hospital-comfort upgrade to get full coverage.</span>' +
         '</div>'
       );
     }
@@ -1474,9 +1454,6 @@
     bodyRows += row("Alternative medicine", function(t){
       return t.tierData.altMed.cap === 0 ? "Not covered" : (t.tierData.altMed.percent + "% up to " + capLabel(t.tierData.altMed.cap));
     });
-    bodyRows += row("Dental", function(t){
-      return t.tierData.dental.cap === 0 ? "Not covered (adult)" : (t.tierData.dental.percent + "% up to " + capLabel(t.tierData.dental.cap));
-    });
     bodyRows += row("Glasses / lenses", function(t){
       return t.tierData.glasses.amount === 0 ? "Not covered" : (chf(t.tierData.glasses.amount) + " / " + t.tierData.glasses.periodYears + "yr" + (t.tierData.glasses.periodYears > 1 ? "s" : ""));
     });
@@ -1629,7 +1606,6 @@
         state.needs[id][field] = sanitizeDecimal(val);
       }, "input");
     });
-    bindTextInput("need-dentalNeed", function(id, val){ state.needs[id].dentalNeed = val; }, "change");
     bindTextInput("need-comfortPref", function(id, val){ state.needs[id].comfortPref = val; }, "change");
     bindTextInput("need-travelFrequency", function(id, val){ state.needs[id].travelFrequency = val; }, "change");
 
