@@ -510,6 +510,17 @@
 
   /* ---------------------------- calc engine ----------------------------- */
 
+  // The glasses question asks for total spend over the next 2 years, a
+  // fixed window independent of any plan. Comparing plans by dividing that
+  // one-time purchase by EACH PLAN'S OWN cap-reset cadence (1yr vs 3yr)
+  // silently rewarded annual-reset plans ~3x for reimbursing the exact same
+  // CHF amount on the exact same purchase — that's what was pushing
+  // Helsana (all 1yr resets) artificially far ahead of insurers whose
+  // glasses cap resets every 3yr, even when both fully cover the spend.
+  // Normalizing against this fixed window instead compares plans on the
+  // actual purchase, not on how often their clock happens to tick.
+  var GLASSES_WINDOW_YEARS = 2;
+
   function computeReimbursement(needs, tier){
     var breakdown = {};
     breakdown.altMed = Math.min((needs.altMedSpend || 0) * tier.altMed.percent / 100, tier.altMed.cap);
@@ -518,7 +529,7 @@
     breakdown.dental = dentalSpend > 0 ? Math.min(dentalSpend * tier.dental.percent / 100, tier.dental.cap) : 0;
 
     var glassesReimbPeriod = (needs.glassesSpend || 0) > 0 ? Math.min(needs.glassesSpend, tier.glasses.amount) : 0;
-    breakdown.glasses = glassesReimbPeriod / tier.glasses.periodYears;
+    breakdown.glasses = glassesReimbPeriod / GLASSES_WINDOW_YEARS;
 
     breakdown.gym = (needs.gymSpend || 0) > 0 ? Math.min((needs.gymSpend || 0) * tier.gym.percent / 100, tier.gym.cap) : 0;
 
@@ -1165,6 +1176,16 @@
       return renderCandidateCard(m, entry.candidate, idx, rec.band, region, entry.netCost, entry.isOriginalBest, anyKnownCost);
     }).join("");
 
+    var costCaveatHtml = anyKnownCost ? "" : (
+      '<div class="disclaimer" style="margin:14px 0 0;">' +
+        '<span class="ico">&#9888;</span>' +
+        '<span>"Best match" ranks by coverage fit only — it has no idea what any of these plans actually cost. ' +
+        'A plan that covers more categories almost always carries a higher premium, so it can easily be the ' +
+        'wrong choice if your needs are narrow (e.g. glasses only). Enter a real premium in a card below — ' +
+        'yours or from the community — to switch this to a genuine "best value" ranking by net annual cost.</span>' +
+      '</div>'
+    );
+
     return (
       '<div class="person-result">' +
         '<div class="person-result-head">' +
@@ -1175,6 +1196,7 @@
         '</div>' +
 
         quoteDetailsHtml +
+        costCaveatHtml +
 
         '<div class="tier-table-wrap">' +
           '<table class="tier-table">' +
