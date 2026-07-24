@@ -520,14 +520,26 @@
   // actual purchase, not on how often their clock happens to tick.
   var GLASSES_WINDOW_YEARS = 2;
 
+  // Free-typed spend fields are sanitized strings (see sanitizeDecimal), and
+  // a value like "." is a valid intermediate typing state that's truthy but
+  // not a number — `|| 0` doesn't catch it, so it was propagating NaN into
+  // every reimbursement figure. Coerce through this instead of `|| 0`.
+  function numOr0(v){
+    var n = parseFloat(v);
+    return isNaN(n) ? 0 : n;
+  }
+
   function computeReimbursement(needs, tier){
     var breakdown = {};
-    breakdown.altMed = Math.min((needs.altMedSpend || 0) * tier.altMed.percent / 100, tier.altMed.cap);
+    var altMedSpend = numOr0(needs.altMedSpend);
+    breakdown.altMed = Math.min(altMedSpend * tier.altMed.percent / 100, tier.altMed.cap);
 
-    var glassesReimbPeriod = (needs.glassesSpend || 0) > 0 ? Math.min(needs.glassesSpend, tier.glasses.amount) : 0;
+    var glassesSpend = numOr0(needs.glassesSpend);
+    var glassesReimbPeriod = glassesSpend > 0 ? Math.min(glassesSpend, tier.glasses.amount) : 0;
     breakdown.glasses = glassesReimbPeriod / GLASSES_WINDOW_YEARS;
 
-    breakdown.gym = (needs.gymSpend || 0) > 0 ? Math.min((needs.gymSpend || 0) * tier.gym.percent / 100, tier.gym.cap) : 0;
+    var gymSpend = numOr0(needs.gymSpend);
+    breakdown.gym = gymSpend > 0 ? Math.min(gymSpend * tier.gym.percent / 100, tier.gym.cap) : 0;
 
     breakdown.maternity = needs.pregnancy ? tier.maternity.amount : 0;
 
@@ -537,7 +549,7 @@
 
   function gateCheck(tier, needs){
     var comfortOk = COMFORT_RANK[tier.hospitalComfort] >= COMFORT_RANK[needs.comfortPref];
-    return { comfortOk: comfortOk, passes: comfortOk, score: comfortOk ? 1 : 0 };
+    return { comfortOk: comfortOk, passes: comfortOk };
   }
 
   function recommendForPerson(member, needs){
@@ -568,7 +580,7 @@
     });
 
     candidates.sort(function(a, b){
-      if (b.gate.score !== a.gate.score) return b.gate.score - a.gate.score;
+      if (b.gate.passes !== a.gate.passes) return b.gate.passes ? 1 : -1;
       return b.reimbursement - a.reimbursement;
     });
 
@@ -579,13 +591,13 @@
     candidates.forEach(function(c){
       var incumbent = bestPerInsurer[c.insurerId];
       if (!incumbent) { bestPerInsurer[c.insurerId] = c; return; }
-      if (c.gate.score > incumbent.gate.score || (c.gate.score === incumbent.gate.score && c.reimbursement > incumbent.reimbursement)){
+      if ((c.gate.passes && !incumbent.gate.passes) || (c.gate.passes === incumbent.gate.passes && c.reimbursement > incumbent.reimbursement)){
         bestPerInsurer[c.insurerId] = c;
       }
     });
     var rankedInsurers = INSURERS.map(function(i){ return bestPerInsurer[i.id]; }).filter(Boolean);
     rankedInsurers.sort(function(a, b){
-      if (b.gate.score !== a.gate.score) return b.gate.score - a.gate.score;
+      if (b.gate.passes !== a.gate.passes) return b.gate.passes ? 1 : -1;
       return b.reimbursement - a.reimbursement;
     });
     var top3 = rankedInsurers.slice(0, 3);
@@ -1350,26 +1362,43 @@
   // community median once enough real quotes exist for that plan/age/region.
   // Returns null when neither is known yet, so ranking can leave that
   // candidate in its original match-based position.
+  // Single source of truth for "premium minus reimbursement" for one
+  // insurer's community-reported quotes — used both to rank candidates
+  // (getCandidateNetCost) and to render the community-pricing box, so the
+  // two can never drift into disagreeing about the same number.
+  function getCommunityNetCost(m, insurerId, tierLabel, band, region){
+    var community = state.community[insurerId];
+    if (!community || community.status !== "loaded" || !region) return null;
+    var tierData = findTierData(insurerId, tierLabel);
+    if (!tierData) return null;
+    var prelim = computePreliminary(community.rows, insurerId, tierLabel, band, region);
+    if (!prelim) return null;
+    var reimb = computeReimbursement(state.needs[m.id], tierData);
+    var annualPremium = prelim.median * 12;
+    return {
+      medianMonthly: prelim.median, count: prelim.count,
+      annualPremium: annualPremium, netAnnual: annualPremium - reimb.total,
+      reimbursement: reimb.total, breakdown: reimb.breakdown
+    };
+  }
+
   function getCandidateNetCost(m, insurerId, band, region){
     var qf = state.quoteForm[m.id] && state.quoteForm[m.id][insurerId];
     if (!qf) return null;
     var tierData = findTierData(insurerId, qf.tier);
     if (!tierData) return null;
-    var reimb = computeReimbursement(state.needs[m.id], tierData);
 
     var ownPremium = parseFloat(qf.premium);
     if (!isNaN(ownPremium) && ownPremium > 0){
+      var reimb = computeReimbursement(state.needs[m.id], tierData);
       var annual = ownPremium * 12;
       return { annualPremium: annual, netAnnual: annual - reimb.total, reimbursement: reimb.total, breakdown: reimb.breakdown, source: "yours" };
     }
 
-    var community = state.community[insurerId];
-    if (community && community.status === "loaded" && region){
-      var prelim = computePreliminary(community.rows, insurerId, qf.tier, band, region);
-      if (prelim){
-        var annual2 = prelim.median * 12;
-        return { annualPremium: annual2, netAnnual: annual2 - reimb.total, reimbursement: reimb.total, breakdown: reimb.breakdown, source: "community", count: prelim.count };
-      }
+    var communityResult = getCommunityNetCost(m, insurerId, qf.tier, band, region);
+    if (communityResult){
+      communityResult.source = "community";
+      return communityResult;
     }
     return null;
   }
@@ -1415,21 +1444,17 @@
     } else if (community.status === "error"){
       prelimHtml = '<div class="status-msg err">' + esc(driveErrorMessage(community.errorCode)) + '</div>';
     } else if (community.status === "loaded"){
-      var tierData = findTierData(insurerId, qf.tier);
       var bucketRows = region ? community.rows.filter(function(r){
         return r.insurerId === insurerId && r.tier === qf.tier && r.ageBand === band && r.region === region;
       }) : [];
-      var prelim = region ? computePreliminary(community.rows, insurerId, qf.tier, band, region) : null;
-      if (prelim && tierData){
-        var reimbAtTier = computeReimbursement(state.needs[m.id], tierData).total;
-        var annualPremium = prelim.median * 12;
-        var netAnnual = annualPremium - reimbAtTier;
+      var communityNet = getCommunityNetCost(m, insurerId, qf.tier, band, region);
+      if (communityNet){
         prelimHtml = (
-          '<div class="prelim">' + chf(prelim.median) + '/mo preliminary</div>' +
-          '<div class="helptext">Median of ' + prelim.count + ' real quotes reported for this plan, age band and region — not an official price.</div>' +
+          '<div class="prelim">' + chf(communityNet.medianMonthly) + '/mo preliminary</div>' +
+          '<div class="helptext">Median of ' + communityNet.count + ' real quotes reported for this plan, age band and region — not an official price.</div>' +
           '<div class="metric-row" style="grid-template-columns:1fr 1fr;margin-top:10px;">' +
-            '<div class="metric"><div class="k">Est. annual premium</div><div class="v">' + chf(annualPremium) + '</div></div>' +
-            '<div class="metric"><div class="k">Est. real net annual cost</div><div class="v" style="color:' + (netAnnual <= 0 ? "var(--success)" : "var(--text)") + '">' + chf(netAnnual) + '</div></div>' +
+            '<div class="metric"><div class="k">Est. annual premium</div><div class="v">' + chf(communityNet.annualPremium) + '</div></div>' +
+            '<div class="metric"><div class="k">Est. real net annual cost</div><div class="v" style="color:' + (communityNet.netAnnual <= 0 ? "var(--success)" : "var(--text)") + '">' + chf(communityNet.netAnnual) + '</div></div>' +
           '</div>'
         );
       } else {
@@ -1707,7 +1732,15 @@
           monthlyPremiumCHF: premiumNum
         }).then(function(rows){
           qf.status = "saved";
-          if (state.community[insurerId]) state.community[insurerId].rows = rows;
+          // A successful save proves Drive is reachable and gives us fresh
+          // rows — if this box had previously failed to load, that stale
+          // "error" status would otherwise keep showing forever even though
+          // we now have current data in hand.
+          if (state.community[insurerId]){
+            state.community[insurerId].status = "loaded";
+            state.community[insurerId].errorCode = "";
+            state.community[insurerId].rows = rows;
+          }
           render();
         }).catch(function(err){
           qf.status = "error";
