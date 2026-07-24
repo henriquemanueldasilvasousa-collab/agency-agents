@@ -83,6 +83,11 @@
   .toggle-btn:focus-visible, .tab:focus-visible, .plan-details summary:focus-visible{
     outline:2px solid var(--accent-2);outline-offset:2px;
   }
+  .approx-badge{
+    display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;
+    color:var(--warn);background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);
+    border-radius:99px;padding:2px 8px;margin-left:6px;cursor:help;
+  }
   input::placeholder{color:var(--text-faint);}
   .field{margin-bottom:16px;}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
@@ -322,7 +327,7 @@
         { tier: "Niveau 1", planName: "Global smart Niveau 1",
           altMed: { percent: 30, cap: 20000 },
           glasses: { amount: 150, periodYears: 3 }, gym: { percent: 50, cap: 200 },
-          hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 0 }, travel: true, approx: true,
           note: "Alternative medicine has no published annual ceiling in the CP — treated as uncapped. Maternity covered as ordinary treatment after a 12-month waiting period, not a fixed payout." },
         { tier: "Niveau 2", planName: "Global smart Niveau 2",
           altMed: { percent: 60, cap: 20000 },
@@ -352,11 +357,13 @@
           altMed: { percent: 75, cap: 3000 },
           glasses: { amount: 300, periodYears: 1 }, gym: { percent: 75, cap: 200 },
           hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
+          approx: true,
           note: "Alt-medicine annual cap is approximate: the brochure gives 75% ambulatory reimbursement but only states an explicit ceiling (CHF 5000) for inpatient complementary-medicine care, not outpatient. Marked as Helsana's “Topseller” in its own materials." },
         { tier: "Premium", planName: "COMPLETA + COMPLETA PLUS",
           altMed: { percent: 90, cap: 4000 },
           glasses: { amount: 500, periodYears: 1 }, gym: { percent: 75, cap: 400 },
           hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
+          approx: true,
           note: "COMPLETA PLUS is an add-on sold only in combination with COMPLETA — figures here are the two products' caps combined. Alt-medicine cap is approximate for the same reason as COMPLETA." }
       ]
     },
@@ -368,16 +375,19 @@
           altMed: { percent: 75, cap: 1000 },
           glasses: { amount: 0, periodYears: 1 }, gym: { percent: 50, cap: 300 },
           hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
+          approx: true,
           note: "myFlex bundles 3 separate products (Ambulatoire, Hospitalisation, Médecine alternative myFlex); this row combines their Economy levels. Hospital ward (general/semi-private/private) isn't tabulated per tier in the brochure — inferred from CSS's own “choose your comfort level” marketing copy." },
         { tier: "Balance", planName: "myFlex Balance",
           altMed: { percent: 75, cap: 3000 },
           glasses: { amount: 150, periodYears: 1 }, gym: { percent: 50, cap: 500 },
           hospitalComfort: "semi-private", maternity: { amount: 1500 }, travel: true,
+          approx: true,
           note: "Hospital ward inferred (see Economy note)." },
         { tier: "Premium", planName: "myFlex Premium",
           altMed: { percent: 75, cap: 10000 },
           glasses: { amount: 300, periodYears: 1 }, gym: { percent: 50, cap: 700 },
           hospitalComfort: "private", maternity: { amount: 2000 }, travel: true,
+          approx: true,
           note: "Hospital ward inferred (see Economy note)." }
       ]
     },
@@ -419,17 +429,20 @@
           altMed: { percent: 100, cap: 1600 },
           glasses: { amount: 200, periodYears: 3 }, gym: { percent: 90, cap: 500 },
           hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
+          approx: true,
           note: "Swica reimburses alt-medicine as “up to CHF 80/hour” rather than %+annual cap — the figure here approximates a typical ~20 sessions/year. Hospital ward requires Swica's separate Hospita product, not bundled into COMPLETA." },
         { tier: "Forte", planName: "COMPLETA FORTE",
           altMed: { percent: 100, cap: 2400 },
           glasses: { amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
           hospitalComfort: "general", maternity: { amount: 650 }, travel: true,
+          approx: true,
           note: "Alt-medicine cap approximated the same way as TOP, at Forte's CHF 120/hour rate." },
         { tier: "Forte + Hospita Privée", planName: "COMPLETA FORTE + HOSPITA PRIVÉE",
           altMed: { percent: 100, cap: 2400 },
           glasses: { amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
           hospitalComfort: "private", maternity: { amount: 650 }, travel: true,
-          note: "Represents COMPLETA FORTE combined with Swica's separate Hospita Privée hospital product, as households commonly buy them together." }
+          approx: true,
+          note: "Represents COMPLETA FORTE combined with Swica's separate Hospita Privée hospital product, as households commonly buy them together — inherits Forte's approximated alt-medicine cap." }
       ]
     },
     {
@@ -496,6 +509,19 @@
 
   function regionFromPostal(code){
     if (!/^\d{4}$/.test(code || "")) return "";
+    var n = parseInt(code, 10);
+    // Checked before the first-digit fallback below — Switzerland's ~4000
+    // real postal codes have plenty of cross-canton exceptions a single
+    // leading digit can't capture, and these were the biggest, most visible
+    // misses: all of Ticino (Lugano 6900, Chiasso 6830, Mendrisio 6850, …)
+    // was falling into "LU-Zentralschweiz", Valais and Fribourg were both
+    // swallowed by "VD", and Schaffhausen/Thurgau were swallowed by "ZH".
+    // Still an approximation, just a much smaller one.
+    if (n >= 6500 && n <= 6999) return "TI";
+    if ((n >= 1870 && n <= 1999) || (n >= 3900 && n <= 3999)) return "VS";
+    if (n >= 1630 && n <= 1799) return "FR";
+    if (n >= 8200 && n <= 8265) return "SH";
+    if ((n >= 8500 && n <= 8599) || (n >= 9400 && n <= 9499)) return "TG";
     if (code.slice(0, 2) === "12") return "GE";
     var d = code.charAt(0);
     if (d === "1") return "VD";
@@ -503,7 +529,7 @@
     if (d === "3") return "BE";
     if (d === "4") return "BS-BL-SO";
     if (d === "5") return "AG";
-    if (d === "6") return (code.slice(0, 2) === "65" || code.slice(0, 2) === "66") ? "TI" : "LU-Zentralschweiz";
+    if (d === "6") return "LU-Zentralschweiz";
     if (d === "7") return "GR";
     if (d === "8") return "ZH";
     if (d === "9") return "SG-Ostschweiz";
@@ -1062,6 +1088,7 @@
             '<div class="toggle-btn ' + (!n.pregnancy ? "active" : "") + '" role="radio" aria-checked="' + (!n.pregnancy) + '" tabindex="0" data-action="need-pregnancy" data-id="' + m.id + '" data-value="false">No</div>' +
             '<div class="toggle-btn ' + (n.pregnancy ? "active" : "") + '" role="radio" aria-checked="' + n.pregnancy + '" tabindex="0" data-action="need-pregnancy" data-id="' + m.id + '" data-value="true">Yes</div>' +
           '</div>' +
+          (n.pregnancy ? '<div class="helptext" style="margin-top:8px;">Most plans only pay maternity benefits after a waiting period of about 12 months from when the policy started — the figures below assume that period has already passed. If you\'re switching insurer specifically because of this pregnancy, check the waiting period first; it may not pay out in time.</div>' : "") +
         '</div>' +
       '</div>' +
       renderNav()
@@ -1273,7 +1300,9 @@
       : '<div class="helptext" style="margin:10px 0;">No specific ambulatory needs entered — this reflects a baseline match.</div>';
 
     var sourceNote = candidate.insurerSourced
-      ? '<span class="helptext">Sourced from ' + esc(candidate.insurerSourceLabel) + '.</span>'
+      ? '<span class="helptext">Sourced from ' + esc(candidate.insurerSourceLabel) + '.' +
+        (candidate.tierData.approx ? ' <span class="approx-badge" title="This plan has one or more figures that had to be approximated from the source documents rather than read off directly — see full plan details below.">~ figure approximated</span>' : "") +
+        '</span>'
       : '<span class="helptext" style="color:var(--warn);">Estimated, unverified — ' + esc(candidate.insurerSourceLabel) + '</span>';
 
     var mismatchHtml = "";
@@ -1284,6 +1313,17 @@
           '<span class="ico">&#9888;</span>' +
           '<span>This plan doesn\'t cover a ' + esc(memberNeeds.comfortPref) + ' ward' +
           '. You\'d likely need to combine it with a separate hospital-comfort upgrade to get full coverage.</span>' +
+        '</div>'
+      );
+    }
+
+    var unsourcedTopHtml = "";
+    if (idx === 0 && !candidate.insurerSourced){
+      unsourcedTopHtml = (
+        '<div class="disclaimer" style="margin-bottom:14px;">' +
+          '<span class="ico">&#9888;</span>' +
+          '<span><b>This top result is an unverified estimate</b>, not a figure from ' + esc(candidate.insurerName) + '\'s own documents — ' +
+          esc(candidate.insurerSourceLabel) + '. Treat it as a placeholder and confirm directly with ' + esc(candidate.insurerName) + ' before deciding.</span>' +
         '</div>'
       );
     }
@@ -1304,6 +1344,7 @@
         '</div>' +
 
         originalBestNote +
+        unsourcedTopHtml +
         mismatchHtml +
 
         '<div class="metric-row" style="grid-template-columns:' + (netCost && netCost.source === "yours" ? "1fr 1fr" : "1fr") + ';">' +
