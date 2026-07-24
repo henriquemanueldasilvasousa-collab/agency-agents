@@ -83,6 +83,10 @@
   .toggle-btn:focus-visible, .tab:focus-visible, .plan-details summary:focus-visible{
     outline:2px solid var(--accent-2);outline-offset:2px;
   }
+  .sr-only{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0,0,0,0);white-space:nowrap;border:0;
+  }
   .approx-badge{
     display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;
     color:var(--warn);background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);
@@ -271,10 +275,21 @@
     .person-result, .candidate-card{break-inside:avoid;page-break-inside:avoid;}
     .plan-details summary{display:none;}
     a{color:var(--accent-2);text-decoration:underline;}
+    /* #app's 920px max-width and .tier-table-wrap's horizontal scrollbar
+       are screen-only affordances — print has no scrollbar, so a 4-column
+       table (label + 3 insurers, often long French/German plan names)
+       would otherwise clip against that fixed width instead of using the
+       full printable page. */
+    #app{max-width:none;padding:0 8px;}
+    .tier-table-wrap{overflow-x:visible;}
+    table.tier-table{font-size:10.5px;table-layout:fixed;width:100%;}
+    table.tier-table th, table.tier-table td{padding:6px 7px;word-break:break-word;}
+    table.tier-table td:first-child, table.tier-table th:first-child{width:22%;}
   }
 </style>
 
 <div id="app"></div>
+<div id="live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
 <script>
 (function(){
@@ -661,8 +676,16 @@
     return "Foyer Data — " + insurer.name;
   }
 
+  // RFC4180-style quoting. The underlying Google Sheet is manually
+  // editable by anyone in the community — a plain comma-strip on write
+  // doesn't help if someone later types a comma directly into a cell in
+  // Sheets, which would silently shift every column after it for a naive
+  // split(","). Quote fields that need it on write, and parse quotes
+  // properly on read so a stray comma in one cell can't corrupt others'.
   function csvEscape(v){
-    return String(v == null ? "" : v).replace(/[\r\n,]/g, " ");
+    var s = String(v == null ? "" : v);
+    if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
   }
 
   function rowsToCsv(rows){
@@ -674,14 +697,42 @@
   }
 
   function csvToRows(text){
-    var lines = String(text || "").split(/\r\n|\n/).filter(function(l){ return l.length > 0; });
-    if (lines.length < 2) return [];
-    var header = lines[0].split(",");
-    return lines.slice(1).map(function(line){
-      var cells = line.split(",");
-      var row = {};
-      header.forEach(function(h, i){ row[h] = cells[i] || ""; });
-      return row;
+    var raw = String(text || "");
+    if (!raw) return [];
+    var rows = [];
+    var row = [];
+    var cur = "";
+    var inQuotes = false;
+    for (var i = 0; i < raw.length; i++){
+      var ch = raw[i];
+      if (inQuotes){
+        if (ch === '"'){
+          if (raw[i + 1] === '"'){ cur += '"'; i++; }
+          else inQuotes = false;
+        } else {
+          cur += ch;
+        }
+      } else if (ch === '"'){
+        inQuotes = true;
+      } else if (ch === ","){
+        row.push(cur); cur = "";
+      } else if (ch === "\r"){
+        // ignored — the following \n (or end of text) terminates the row
+      } else if (ch === "\n"){
+        row.push(cur); cur = "";
+        rows.push(row); row = [];
+      } else {
+        cur += ch;
+      }
+    }
+    if (cur.length > 0 || row.length > 0){ row.push(cur); rows.push(row); }
+    rows = rows.filter(function(r){ return !(r.length === 1 && r[0] === ""); });
+    if (rows.length < 2) return [];
+    var header = rows[0];
+    return rows.slice(1).map(function(cells){
+      var row2 = {};
+      header.forEach(function(h, i){ row2[h] = cells[i] || ""; });
+      return row2;
     });
   }
 
@@ -838,9 +889,15 @@
     });
   }
 
+  // Populated by renderPersonResult() during a step-4 render, then flushed
+  // to the persistent #live-region node below — see the comment at its
+  // call site for why this can't just be inline markup.
+  var pendingLiveAnnouncement = "";
+
   function render(){
     var app = document.getElementById("app");
     var html = "";
+    pendingLiveAnnouncement = "";
     html += renderBrand();
     html += renderStepper();
     if (state.step === 1) html += renderStep1();
@@ -849,6 +906,8 @@
     else if (state.step === 4) html += renderStep4();
     app.innerHTML = html;
     attachHandlers();
+    var liveRegion = document.getElementById("live-region");
+    if (liveRegion) liveRegion.textContent = pendingLiveAnnouncement;
   }
 
   function renderBrand(){
@@ -1233,6 +1292,19 @@
       '</div>'
     );
 
+    // Cards reorder visually when a price is entered and the ranking
+    // switches from match-based to value-based, but nothing tells a
+    // screen-reader user that happened. Appending to the module-level
+    // pendingLiveAnnouncement (flushed to a persistent #live-region node
+    // at the end of render()) rather than embedding this inline: a live
+    // region has to be the SAME DOM node across updates for most screen
+    // readers to announce it, and app.innerHTML replacement destroys and
+    // recreates everything on every render, so an inline live region here
+    // would never reliably fire.
+    pendingLiveAnnouncement += (pendingLiveAnnouncement ? " " : "") +
+      (m.name || "This household member") + ': ranked by ' + (anyKnownCost ? "best value (net annual cost)" : "best coverage match") +
+      ' — #1 is ' + ranked[0].candidate.insurerName + ' — ' + ranked[0].candidate.planName + '.';
+
     return (
       '<div class="person-result">' +
         '<div class="person-result-head">' +
@@ -1482,11 +1554,15 @@
       return '<option value="' + esc(t.tier) + '" ' + (qf.tier === t.tier ? "selected" : "") + '>' + esc(t.planName) + '</option>';
     }).join("") : "";
 
+    // Loading/error/not-enough-data states are all just "nothing to show
+    // yet" — worth a nudge on screen, meaningless on paper (a printed page
+    // can't act on "connect Google Drive in Settings"), so those variants
+    // are no-print; only an actual computed preliminary price is kept.
     var prelimHtml = "";
     if (community.status === "loading"){
-      prelimHtml = '<div class="helptext">Loading community data…</div>';
+      prelimHtml = '<div class="helptext no-print">Loading community data…</div>';
     } else if (community.status === "error"){
-      prelimHtml = '<div class="status-msg err">' + esc(driveErrorMessage(community.errorCode)) + '</div>';
+      prelimHtml = '<div class="status-msg err no-print">' + esc(driveErrorMessage(community.errorCode)) + '</div>';
     } else if (community.status === "loaded"){
       var bucketRows = region ? community.rows.filter(function(r){
         return r.insurerId === insurerId && r.tier === qf.tier && r.ageBand === band && r.region === region;
@@ -1502,17 +1578,19 @@
           '</div>'
         );
       } else {
-        prelimHtml = '<div class="helptext">Not enough reported quotes yet for this plan/age/region (' + bucketRows.length + ' so far, need ' + PRELIM_THRESHOLD + ') — report yours below to help build it.</div>';
+        prelimHtml = '<div class="helptext no-print">Not enough reported quotes yet for this plan/age/region (' + bucketRows.length + ' so far, need ' + PRELIM_THRESHOLD + ') — report yours below to help build it.</div>';
       }
     }
 
     var statusHtml = "";
-    if (qf.status === "saving") statusHtml = '<div class="status-msg info">Saving…</div>';
-    else if (qf.status === "saved") statusHtml = '<div class="status-msg ok">Saved — thank you, this helps future estimates.</div>';
-    else if (qf.status === "error") statusHtml = '<div class="status-msg err">' + esc(driveErrorMessage(qf.errorCode)) + '</div>';
+    if (qf.status === "saving") statusHtml = '<div class="status-msg info no-print">Saving…</div>';
+    else if (qf.status === "saved") statusHtml = '<div class="status-msg ok no-print">Saved — thank you, this helps future estimates.</div>';
+    else if (qf.status === "error") statusHtml = '<div class="status-msg err no-print">' + esc(driveErrorMessage(qf.errorCode)) + '</div>';
+
+    var hasPrintablePrelim = community.status === "loaded" && !!getCommunityNetCost(m, insurerId, qf.tier, band, region);
 
     return (
-      '<div class="community-box">' +
+      '<div class="community-box' + (hasPrintablePrelim ? '' : ' no-print') + '">' +
         '<h4>Community-sourced pricing</h4>' +
         prelimHtml +
         '<div class="no-print">' +
