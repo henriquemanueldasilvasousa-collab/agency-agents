@@ -1119,11 +1119,17 @@
   }
 
   function renderPersonResult(r){
-    var m = r.member, rec = r.rec;
+    var m = r.member, rec = r.rec, coverage = r.coverage;
     var age = rec.age;
     var ageStr = age === null ? "" : (age + "y · " + rec.band);
     var h = state.household;
     var region = regionFromPostal(h.postalCode);
+
+    var currentAnnualPremium = null;
+    if (coverage && coverage.hasComplementary){
+      var monthlyNum = parseFloat(coverage.monthlyPremium);
+      if (!isNaN(monthlyNum) && monthlyNum > 0) currentAnnualPremium = monthlyNum * 12;
+    }
 
     var detailsBits = [];
     if (m.birthDate) detailsBits.push("born " + m.birthDate);
@@ -1132,6 +1138,21 @@
     var quoteDetailsHtml = detailsBits.length
       ? '<div class="helptext" style="margin:2px 0 14px;">For each insurer\'s own calculator: ' + esc(detailsBits.join(", ")) + '</div>'
       : "";
+
+    var currentCoverageHtml = "";
+    if (coverage && coverage.hasComplementary){
+      var currentBits = [];
+      var currentInsurer = coverage.insurerId ? INSURERS.filter(function(i){ return i.id === coverage.insurerId; })[0] : null;
+      if (currentInsurer) currentBits.push(currentInsurer.name);
+      else if (coverage.insurerId === "other") currentBits.push("other insurer");
+      if (coverage.planNames && coverage.planNames.length) currentBits.push(coverage.planNames.join(", "));
+      currentCoverageHtml = (
+        '<div class="helptext" style="margin:2px 0 14px;">' +
+          'Currently has' + (currentBits.length ? ": " + esc(currentBits.join(" — ")) : " complementary insurance") +
+          (currentAnnualPremium !== null ? ' (' + chf(currentAnnualPremium) + '/yr)' : '') +
+        '</div>'
+      );
+    }
 
     // Every candidate needs a quote-form entry before we can look up its net
     // cost, since ranking runs before the cards themselves are rendered.
@@ -1157,7 +1178,7 @@
     var tagLabel = anyKnownCost ? "BEST VALUE" : "BEST MATCH";
     var comparisonRows = buildTierTable(ranked.map(function(x){ return x.candidate; }), 0, tagLabel);
     var candidatesHtml = ranked.map(function(entry, idx){
-      return renderCandidateCard(m, entry.candidate, idx, rec.band, region, entry.netCost, entry.isOriginalBest, anyKnownCost);
+      return renderCandidateCard(m, entry.candidate, idx, rec.band, region, entry.netCost, entry.isOriginalBest, anyKnownCost, currentAnnualPremium);
     }).join("");
 
     var costCaveatHtml = anyKnownCost ? "" : (
@@ -1180,6 +1201,7 @@
         '</div>' +
 
         quoteDetailsHtml +
+        currentCoverageHtml +
         costCaveatHtml +
 
         '<div class="tier-table-wrap">' +
@@ -1197,7 +1219,7 @@
     );
   }
 
-  function renderCandidateCard(m, candidate, idx, band, region, netCost, isOriginalBest, anyKnownCost){
+  function renderCandidateCard(m, candidate, idx, band, region, netCost, isOriginalBest, anyKnownCost, currentAnnualPremium){
     var rankLabel;
     if (anyKnownCost) rankLabel = idx === 0 ? "#1 · Best value" : ("#" + (idx + 1));
     else rankLabel = idx === 0 ? "#1 · Best match" : ("#" + (idx + 1));
@@ -1205,6 +1227,21 @@
     var originalBestNote = (isOriginalBest && idx !== 0)
       ? '<div class="helptext" style="margin:-6px 0 12px;">This was the closest coverage match to your stated needs — see net cost below for how it compares on price.</div>'
       : "";
+
+    var savingsHtml = "";
+    if (netCost && currentAnnualPremium !== null){
+      var savings = currentAnnualPremium - netCost.netAnnual;
+      var savingsCls = savings > 0 ? "pos" : (savings < 0 ? "neg" : "");
+      var savingsLabel = savings > 0
+        ? ('▾ Roughly ' + chf(savings) + '/yr less than what you currently pay in premium')
+        : (savings < 0
+            ? ('▴ Roughly ' + chf(-savings) + '/yr more than what you currently pay in premium')
+            : 'About the same as what you currently pay in premium');
+      savingsHtml = (
+        '<div class="savings-note ' + savingsCls + '">' + savingsLabel + '</div>' +
+        '<div class="helptext" style="margin:-6px 0 10px;">Compares this plan\'s net cost to your reported current premium — not netted against what your current plan itself reimburses, since we don\'t model that.</div>'
+      );
+    }
 
     var reimbursementToShow = netCost ? netCost.reimbursement : candidate.reimbursement;
     var breakdownSource = netCost ? netCost.breakdown : candidate.breakdown;
@@ -1258,6 +1295,7 @@
           metricCells +
         '</div>' +
 
+        savingsHtml +
         chipsHtml +
         '<div style="margin-bottom:10px;">' + sourceNote + '</div>' +
 
