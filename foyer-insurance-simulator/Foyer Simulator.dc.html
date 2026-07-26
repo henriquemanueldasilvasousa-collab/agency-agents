@@ -83,10 +83,6 @@
   .toggle-btn:focus-visible, .tab:focus-visible, .plan-details summary:focus-visible{
     outline:2px solid var(--accent-2);outline-offset:2px;
   }
-  .btn-inline-link{
-    background:none;border:none;padding:0;margin-left:4px;color:inherit;text-decoration:underline;
-    font-size:inherit;font-weight:600;cursor:pointer;
-  }
   .sr-only{
     position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
     clip:rect(0,0,0,0);white-space:nowrap;border:0;
@@ -1145,51 +1141,6 @@ var POSTAL_CODE_CANTON = {
     return { id: uid(), name: name || "", birthDate: "", sex: "" };
   }
 
-  var STORAGE_KEY = "foyer-simulator-state-v1";
-
-  function saveStateToStorage(){
-    try {
-      var snapshot = JSON.parse(JSON.stringify(state));
-      // state.community is a live Drive cache, not user-entered data —
-      // restoring a stale copy would show outdated community pricing
-      // without ever refetching, since ensureCommunityLoaded() only
-      // fetches when status is "idle".
-      snapshot.community = {};
-      // Transient in-flight statuses ("saving"/"error") shouldn't survive
-      // a reload as if still in progress; the entered tier/premium is the
-      // only part worth keeping.
-      Object.keys(snapshot.quoteForm || {}).forEach(function(memberId){
-        Object.keys(snapshot.quoteForm[memberId] || {}).forEach(function(insurerId){
-          var qf = snapshot.quoteForm[memberId][insurerId];
-          qf.status = "idle";
-          qf.errorCode = "";
-        });
-      });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
-    } catch (e){
-      // Private browsing, storage quota, or localStorage disabled — the
-      // app still works, it just won't survive a refresh. Nothing to
-      // surface to the user on every keystroke for this.
-    }
-  }
-
-  function loadStateFromStorage(){
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object" || !parsed.household || !Array.isArray(parsed.household.members) || !parsed.household.members.length) return null;
-      parsed.community = {};
-      return parsed;
-    } catch (e){
-      return null;
-    }
-  }
-
-  function clearStoredState(){
-    try { localStorage.removeItem(STORAGE_KEY); } catch (e){}
-  }
-
   function defaultState(){
     var m1 = newMember("");
     var m2 = newMember("");
@@ -1213,9 +1164,12 @@ var POSTAL_CODE_CANTON = {
     };
   }
 
-  var restoredState = loadStateFromStorage();
-  var restoredFromStorage = !!restoredState;
-  var state = restoredState || defaultState();
+  // No persistence across page loads by design: this tool is used by
+  // agents across multiple different clients back to back, and carrying
+  // over one client's name/postal code/coverage into the next session
+  // risks silently mixing up whose data is whose. Every fresh load starts
+  // from a clean slate.
+  var state = defaultState();
 
   function ensureMemberData(id){
     if (!state.coverage[id]) state.coverage[id] = { hasComplementary: false, insurerId: "", planNames: [], monthlyPremium: "" };
@@ -1283,7 +1237,6 @@ var POSTAL_CODE_CANTON = {
     attachHandlers();
     var liveRegion = document.getElementById("live-region");
     if (liveRegion) liveRegion.textContent = pendingLiveAnnouncement;
-    saveStateToStorage();
   }
 
   function renderBrand(){
@@ -1352,16 +1305,7 @@ var POSTAL_CODE_CANTON = {
       );
     }).join("");
 
-    var restoredBannerHtml = restoredFromStorage ? (
-      '<div class="disclaimer">' +
-        '<span class="ico">&#8635;</span>' +
-        '<span>Picked up where you left off — this browser had a saved household from a previous visit. ' +
-        '<button class="btn-inline-link" data-action="discard-restored">Discard it and start fresh instead</button></span>' +
-      '</div>'
-    ) : "";
-
     return (
-      restoredBannerHtml +
       '<div class="card">' +
         '<h2>Your household</h2>' +
         '<p class="lede">Everyone at the same address shares one postal code. Date of birth and sex are what each insurer\'s own calculator needs for a real premium — we\'ll show them back to you on the results page to enter there.</p>' +
@@ -2297,23 +2241,10 @@ var POSTAL_CODE_CANTON = {
       });
     });
 
-    app.querySelectorAll('[data-action="discard-restored"]').forEach(function(el){
-      el.addEventListener("click", function(){
-        if (confirm("Discard the restored household and start fresh?")){
-          clearStoredState();
-          state = defaultState();
-          restoredFromStorage = false;
-          render();
-        }
-      });
-    });
-
     app.querySelectorAll('[data-action="restart"]').forEach(function(el){
       el.addEventListener("click", function(){
         if (confirm("Start over? This clears everything you entered.")){
-          clearStoredState();
           state = defaultState();
-          restoredFromStorage = false;
           window.scrollTo(0, 0);
           render();
         }
