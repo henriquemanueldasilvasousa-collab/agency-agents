@@ -316,7 +316,7 @@
   var INSURERS = [
     {
       id: "groupe-mutuel", name: "Groupe Mutuel", url: "https://www.groupemutuel.ch",
-      sourced: true, sourceLabel: "Global smart conditions (GOGA02–F8, ed. 01.06.2023) + product overview (ed. 6.25)",
+      sourced: true, sourceLabel: "Global smart special conditions (GOGA03-E1, ed. 01.12.2025) + product overview (ed. 6.25)",
       // Full named product catalog per "Aperçu des assurances complémentaires selon la LCA" (ed. 6.25) —
       // used only for the coverage step's "what do you already have" picker. Only the Global smart (GO)
       // family below is modeled in the recommendation engine.
@@ -342,20 +342,20 @@
       ],
       tiers: [
         { tier: "Niveau 1", planName: "Global smart Niveau 1",
-          altMed: { percent: 30, cap: 20000 },
+          altMed: { percent: 30, cap: 1000 },
           glasses: { percent: 100, amount: 150, periodYears: 3 }, gym: { percent: 50, cap: 200 },
-          hospitalComfort: "general", maternity: { amount: 0 }, approx: true,
-          note: "Alternative medicine has no published annual ceiling in the CP — treated as uncapped. Maternity covered as ordinary treatment after a 12-month waiting period, not a fixed payout." },
+          hospitalComfort: "general", maternity: { amount: 0 },
+          note: "Maternity is covered as ordinary hospitalisation/outpatient treatment after a 12-month waiting period, not a separate payout. The CHF 1'000/yr alt-medicine cap includes a CHF 200/yr sub-cap specifically for massages." },
         { tier: "Niveau 2", planName: "Global smart Niveau 2",
-          altMed: { percent: 60, cap: 20000 },
+          altMed: { percent: 60, cap: 2500 },
           glasses: { percent: 100, amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
-          hospitalComfort: "general", maternity: { amount: 0 }, approx: true,
-          note: "Alternative medicine has no published annual ceiling in the CP, same as Niveau 1 — treated as uncapped." },
+          hospitalComfort: "general", maternity: { amount: 0 },
+          note: "The CHF 2'500/yr alt-medicine cap includes a CHF 300/yr sub-cap specifically for massages." },
         { tier: "Niveau 3", planName: "Global smart Niveau 3",
-          altMed: { percent: 90, cap: 20000 },
+          altMed: { percent: 80, cap: 3000 },
           glasses: { percent: 100, amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
-          hospitalComfort: "private", maternity: { amount: 0 }, approx: true,
-          note: "Hospital division is semi-private or private, assured's choice, per the policy. Alternative medicine has no published annual ceiling in the CP, same as Niveau 1 — treated as uncapped." }
+          hospitalComfort: "private", maternity: { amount: 0 },
+          note: "Hospital division is semi-private or private, assured's choice, per the policy. The CHF 3'000/yr alt-medicine cap includes a CHF 500/yr sub-cap specifically for massages." }
       ]
     },
     {
@@ -1714,12 +1714,12 @@
   }
 
   // Tiers with no real published alt-medicine ceiling use cap:20000 in
-  // INSURERS as a sentinel for "uncapped" (GM's three Global smart tiers,
-  // Helsana's COMPLETA/COMPLETA PLUS) rather than a real sourced number.
-  // 15000 sits comfortably between that sentinel and every other insurer's
-  // actual highest cap (CSS/Sanitas Premium at 10000) — if a future tier
-  // gets a genuine sourced cap at or above 15000, raise this threshold (or
-  // the sentinel value) so it isn't mislabeled as uncapped.
+  // INSURERS as a sentinel for "uncapped" (currently only Helsana's
+  // COMPLETA/COMPLETA PLUS) rather than a real sourced number. 15000 sits
+  // comfortably between that sentinel and every other insurer's actual
+  // highest cap (CSS/Sanitas Premium at 10000) — if a future tier gets a
+  // genuine sourced cap at or above 15000, raise this threshold (or the
+  // sentinel value) so it isn't mislabeled as uncapped.
   function capLabel(cap){
     return cap >= 15000 ? "no published annual cap" : (chf(cap) + "/yr");
   }
