@@ -244,10 +244,15 @@
     border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:20px;
     margin-top:16px;background:var(--surface-2);
   }
+  .candidate-card.best{
+    border:2px solid var(--accent);
+    background:linear-gradient(180deg, var(--accent-soft), var(--surface-2));
+  }
   .rank-pill{
     font-size:11px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;
     align-self:center;
   }
+  .other-options-wrap{opacity:.92;}
   .community-box{
     background:var(--surface-2);border:1px solid var(--border-soft);border-radius:var(--radius-sm);
     padding:16px;margin:16px 0;
@@ -1291,12 +1296,7 @@
     );
 
     html += '<div class="card">';
-    html += (
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">' +
-        '<div><h2>Household summary</h2><p class="lede" style="margin-bottom:0;">Based on the plan that best covers each member\'s stated needs.</p></div>' +
-        '<button class="btn btn-ghost btn-sm no-print" data-action="print-pdf">Download / print PDF</button>' +
-      '</div>'
-    );
+    html += '<h2>Household summary</h2><p class="lede">Based on the plan that best covers each member\'s stated needs.</p>';
     html += (
       '<div class="summary-strip">' +
         '<div class="summary-tile"><div class="label">Household members</div><div class="value">' + h.members.length + '</div></div>' +
@@ -1309,6 +1309,13 @@
     rankedResults.forEach(function(x){
       html += renderPersonResult(x.result, x.ranked, x.anyKnownCost, region);
     });
+
+    html += (
+      '<div class="card no-print" style="text-align:center;">' +
+        '<button class="btn btn-primary" data-action="print-pdf">Download / print PDF</button>' +
+        '<div class="helptext" style="margin-top:10px;">Opens your browser\'s print dialog — choose "Save as PDF" as the destination. If nothing happens, the page may be embedded in a sandboxed viewer; open it in its own browser tab first.</div>' +
+      '</div>'
+    );
 
     html += (
       '<div class="restart-row">' +
@@ -1386,9 +1393,16 @@
 
     var tagLabel = anyKnownCost ? "BEST VALUE" : "BEST MATCH";
     var comparisonRows = buildTierTable(ranked.map(function(x){ return x.candidate; }), 0, tagLabel);
-    var candidatesHtml = ranked.map(function(entry, idx){
+    var cardsByRank = ranked.map(function(entry, idx){
       return renderCandidateCard(m, entry.candidate, idx, rec.band, region, entry.netCost, entry.isOriginalBest, anyKnownCost, currentAnnualPremium);
-    }).join("");
+    });
+    var bestCardHtml = cardsByRank[0] || "";
+    var otherCardsHtml = cardsByRank.length > 1
+      ? (
+          '<div class="section-title" style="margin-top:24px;">Other options compared</div>' +
+          '<div class="other-options-wrap">' + cardsByRank.slice(1).join("") + '</div>'
+        )
+      : "";
 
     var costCaveatHtml = anyKnownCost ? "" : (
       '<div class="disclaimer" style="margin:14px 0 0;">' +
@@ -1426,6 +1440,7 @@
         currentCoverageHtml +
         costCaveatHtml +
 
+        '<div class="section-title">Compare your top options</div>' +
         '<div class="tier-table-wrap">' +
           '<table class="tier-table">' +
             '<thead><tr>' +
@@ -1436,7 +1451,9 @@
           '</table>' +
         '</div>' +
 
-        candidatesHtml +
+        '<div class="section-title" style="margin-top:24px;">Recommended for ' + esc(m.name || "this household member") + '</div>' +
+        bestCardHtml +
+        otherCardsHtml +
       '</div>'
     );
   }
@@ -1506,7 +1523,7 @@
     }
 
     return (
-      '<div class="candidate-card">' +
+      '<div class="candidate-card' + (idx === 0 ? ' best' : '') + '">' +
         '<div class="person-result-head">' +
           '<span class="rank-pill">' + rankLabel + '</span>' +
           '<div class="rec-badge">' + esc(candidate.insurerName) + ' — ' + esc(candidate.planName) + '</div>' +
