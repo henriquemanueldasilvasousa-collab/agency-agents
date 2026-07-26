@@ -305,9 +305,7 @@
    * conditions (CGA/CSA/CC), supplied directly by the user. Every field
    * traces to a real named product; where a brochure summarized rather
    * than itemized a figure (e.g. a per-domain cap, or a ward class not
-   * spelled out per tier), that's noted in the tier's `note`. Atupri has
-   * no official documents yet — its tiers are carried over from public
-   * web research and are explicitly flagged `sourced: false`.
+   * spelled out per tier), that's noted in the tier's `note`.
    *
    * Premiums are intentionally NOT modeled: Swiss LCA premiums depend on
    * age, canton and underwriting, and none of these insurers expose a
@@ -345,16 +343,16 @@
       tiers: [
         { tier: "Niveau 1", planName: "Global smart Niveau 1",
           altMed: { percent: 30, cap: 20000 },
-          glasses: { amount: 150, periodYears: 3 }, gym: { percent: 50, cap: 200 },
+          glasses: { percent: 100, amount: 150, periodYears: 3 }, gym: { percent: 50, cap: 200 },
           hospitalComfort: "general", maternity: { amount: 0 }, travel: true, approx: true,
           note: "Alternative medicine has no published annual ceiling in the CP — treated as uncapped. Maternity covered as ordinary treatment after a 12-month waiting period, not a fixed payout." },
         { tier: "Niveau 2", planName: "Global smart Niveau 2",
           altMed: { percent: 60, cap: 20000 },
-          glasses: { amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
+          glasses: { percent: 100, amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
           hospitalComfort: "general", maternity: { amount: 0 }, travel: true },
         { tier: "Niveau 3", planName: "Global smart Niveau 3",
           altMed: { percent: 90, cap: 20000 },
-          glasses: { amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
+          glasses: { percent: 100, amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
           hospitalComfort: "private", maternity: { amount: 0 }, travel: true,
           note: "Hospital division is semi-private or private, assured's choice, per the policy." }
       ]
@@ -369,18 +367,18 @@
       tiers: [
         { tier: "Essential", planName: "TOP",
           altMed: { percent: 0, cap: 0 },
-          glasses: { amount: 150, periodYears: 1 }, gym: { percent: 0, cap: 0 },
+          glasses: { percent: 100, amount: 150, periodYears: 1 }, gym: { percent: 0, cap: 0 },
           hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
           note: "TOP's real focus is orthodontics/eyewear/travel, not alternative medicine or fitness — the brochure doesn't itemize those for TOP. Hospital ward comfort (Helsana's separate HOSPITAL product) isn't in this document set." },
         { tier: "Balanced", planName: "COMPLETA",
           altMed: { percent: 75, cap: 3000 },
-          glasses: { amount: 300, periodYears: 1 }, gym: { percent: 75, cap: 200 },
+          glasses: { percent: 100, amount: 300, periodYears: 1 }, gym: { percent: 75, cap: 200 },
           hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
           approx: true,
           note: "Alt-medicine annual cap is approximate: the brochure gives 75% ambulatory reimbursement but only states an explicit ceiling (CHF 5000) for inpatient complementary-medicine care, not outpatient. Marked as Helsana's “Topseller” in its own materials." },
         { tier: "Premium", planName: "COMPLETA + COMPLETA PLUS",
           altMed: { percent: 90, cap: 4000 },
-          glasses: { amount: 500, periodYears: 1 }, gym: { percent: 75, cap: 400 },
+          glasses: { percent: 100, amount: 500, periodYears: 1 }, gym: { percent: 75, cap: 400 },
           hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
           approx: true,
           note: "COMPLETA PLUS is an add-on sold only in combination with COMPLETA — figures here are the two products' caps combined. Alt-medicine cap is approximate for the same reason as COMPLETA." }
@@ -392,19 +390,19 @@
       tiers: [
         { tier: "Economy", planName: "myFlex Economy",
           altMed: { percent: 75, cap: 1000 },
-          glasses: { amount: 0, periodYears: 1 }, gym: { percent: 50, cap: 300 },
+          glasses: { percent: 100, amount: 0, periodYears: 1 }, gym: { percent: 50, cap: 300 },
           hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
           approx: true,
           note: "myFlex bundles 3 separate products (Ambulatoire, Hospitalisation, Médecine alternative myFlex); this row combines their Economy levels. Hospital ward (general/semi-private/private) isn't tabulated per tier in the brochure — inferred from CSS's own “choose your comfort level” marketing copy." },
         { tier: "Balance", planName: "myFlex Balance",
           altMed: { percent: 75, cap: 3000 },
-          glasses: { amount: 150, periodYears: 1 }, gym: { percent: 50, cap: 500 },
+          glasses: { percent: 100, amount: 150, periodYears: 1 }, gym: { percent: 50, cap: 500 },
           hospitalComfort: "semi-private", maternity: { amount: 1500 }, travel: true,
           approx: true,
           note: "Hospital ward inferred (see Economy note)." },
         { tier: "Premium", planName: "myFlex Premium",
           altMed: { percent: 75, cap: 10000 },
-          glasses: { amount: 300, periodYears: 1 }, gym: { percent: 50, cap: 700 },
+          glasses: { percent: 100, amount: 300, periodYears: 1 }, gym: { percent: 50, cap: 700 },
           hospitalComfort: "private", maternity: { amount: 2000 }, travel: true,
           approx: true,
           note: "Hospital ward inferred (see Economy note)." }
@@ -416,17 +414,17 @@
       tiers: [
         { tier: "Basic", planName: "Vital Basic",
           altMed: { percent: 0, cap: 0 },
-          glasses: { amount: 300, periodYears: 3 }, gym: { percent: 0, cap: 0 },
+          glasses: { percent: 100, amount: 300, periodYears: 3 }, gym: { percent: 0, cap: 0 },
           hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
           note: "Vital doesn't include a hospital ward upgrade at any tier; that's Sanitas' separate Hospital Extra/Top Liberty product." },
         { tier: "Smart", planName: "Vital Smart",
           altMed: { percent: 80, cap: 5000 },
-          glasses: { amount: 300, periodYears: 3 }, gym: { percent: 50, cap: 600 },
+          glasses: { percent: 100, amount: 300, periodYears: 3 }, gym: { percent: 50, cap: 600 },
           hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
           note: "Alt-medicine cap picked from Sanitas' two customer-selectable options (CHF 2500 or 5000). Same hospital-ward caveat as Basic." },
         { tier: "Premium", planName: "Vital Premium",
           altMed: { percent: 80, cap: 10000 },
-          glasses: { amount: 600, periodYears: 3 }, gym: { percent: 80, cap: 800 },
+          glasses: { percent: 100, amount: 600, periodYears: 3 }, gym: { percent: 80, cap: 800 },
           hospitalComfort: "general", maternity: { amount: 2000 }, travel: true,
           note: "Same hospital-ward caveat as Basic." }
       ]
@@ -446,19 +444,19 @@
       tiers: [
         { tier: "Top", planName: "COMPLETA TOP",
           altMed: { percent: 100, cap: 1600 },
-          glasses: { amount: 200, periodYears: 3 }, gym: { percent: 90, cap: 500 },
+          glasses: { percent: 100, amount: 200, periodYears: 3 }, gym: { percent: 90, cap: 500 },
           hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
           approx: true,
           note: "Swica reimburses alt-medicine as “up to CHF 80/hour” rather than %+annual cap — the figure here approximates a typical ~20 sessions/year. Hospital ward requires Swica's separate Hospita product, not bundled into COMPLETA." },
         { tier: "Forte", planName: "COMPLETA FORTE",
           altMed: { percent: 100, cap: 2400 },
-          glasses: { amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
+          glasses: { percent: 100, amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
           hospitalComfort: "general", maternity: { amount: 650 }, travel: true,
           approx: true,
           note: "Alt-medicine cap approximated the same way as TOP, at Forte's CHF 120/hour rate." },
         { tier: "Forte + Hospita Privée", planName: "COMPLETA FORTE + HOSPITA PRIVÉE",
           altMed: { percent: 100, cap: 2400 },
-          glasses: { amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
+          glasses: { percent: 100, amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
           hospitalComfort: "private", maternity: { amount: 650 }, travel: true,
           approx: true,
           note: "Represents COMPLETA FORTE combined with Swica's separate Hospita Privée hospital product, as households commonly buy them together — inherits Forte's approximated alt-medicine cap." }
@@ -466,20 +464,24 @@
     },
     {
       id: "atupri", name: "Atupri", url: "https://www.atupri.ch",
-      sourced: false, sourceLabel: "No official Atupri documents supplied yet — figures are estimates from public web research, not verified against a fiche/CGA",
+      sourced: true, sourceLabel: "Basic, Mivita (Reala level) and Intense product fact sheets, ed. 2412-04",
       tiers: [
         { tier: "Basic", planName: "Basic",
           altMed: { percent: 0, cap: 0 },
-          glasses: { amount: 0, periodYears: 1 }, gym: { percent: 75, cap: 200 },
-          hospitalComfort: "general", maternity: { amount: 0 }, travel: true, note: "Estimate, unverified." },
+          glasses: { percent: 100, amount: 0, periodYears: 1 }, gym: { percent: 75, cap: 200 },
+          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
+          note: "Basic's own fact sheet doesn't cover alternative medicine or glasses at all — Mivita or Intense are Atupri's products for that." },
         { tier: "Mivita Reala", planName: "Mivita Reala",
           altMed: { percent: 50, cap: 1500 },
-          glasses: { amount: 0, periodYears: 1 }, gym: { percent: 50, cap: 300 },
-          hospitalComfort: "general", maternity: { amount: 300 }, travel: true, note: "Estimate, unverified." },
+          glasses: { percent: 50, amount: 300, periodYears: 1 }, gym: { percent: 50, cap: 200 },
+          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
+          approx: true,
+          note: "Mivita's benefits are age- and sex-banded, not flat by tier: alt-medicine/glasses/fitness figures here are Mivita's “general benefits,” identical across every age band, but maternity only exists for women aged 13–44 and is really three separate items — CHF 1'000/yr for courses and check-ups (used here), plus CHF 200 for a breastfeeding allowance and CHF 150/day (up to 5 days) for a birth-house stay, neither counted in this figure. Men and the 45+ bands get no Mivita maternity benefit at all." },
         { tier: "Intense", planName: "Intense",
-          altMed: { percent: 50, cap: 1500 },
-          glasses: { amount: 350, periodYears: 1 }, gym: { percent: 50, cap: 300 },
-          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true, note: "Estimate, unverified." }
+          altMed: { percent: 50, cap: 3000 },
+          glasses: { percent: 100, amount: 350, periodYears: 1 }, gym: { percent: 50, cap: 500 },
+          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
+          note: "Intense's glasses contribution is officially a CHF 350–1'500/yr range depending on whether laser eye surgery is included — CHF 350 (the baseline glasses/lenses figure) is used here." }
       ]
     }
   ];
@@ -583,7 +585,7 @@
     breakdown.altMed = Math.min(altMedSpend * tier.altMed.percent / 100, tier.altMed.cap);
 
     var glassesSpend = numOr0(needs.glassesSpend);
-    var glassesReimbPeriod = glassesSpend > 0 ? Math.min(glassesSpend, tier.glasses.amount) : 0;
+    var glassesReimbPeriod = glassesSpend > 0 ? Math.min(glassesSpend * tier.glasses.percent / 100, tier.glasses.amount) : 0;
     breakdown.glasses = glassesReimbPeriod / GLASSES_WINDOW_YEARS;
 
     var gymSpend = numOr0(needs.gymSpend);
@@ -1264,8 +1266,7 @@
       '<div class="disclaimer">' +
         '<span class="ico">&#9888;</span>' +
         '<span>' +
-          '<p style="margin:0 0 8px;">Plan names and reimbursement figures for ' + sourcedCount + ' of ' + INSURERS.length + ' insurers (Groupe Mutuel, Helsana, CSS, Sanitas, Swica) come from their own official 2025/26 brochures and conditions — flagged per plan where a brochure summarized rather than itemized a figure.</p>' +
-          '<p style="margin:0 0 8px;">Atupri has no official documents yet and is marked <b>estimated, unverified</b>.</p>' +
+          '<p style="margin:0 0 8px;">Plan names and reimbursement figures for ' + sourcedCount + ' of ' + INSURERS.length + ' insurers (Groupe Mutuel, Helsana, CSS, Sanitas, Swica, Atupri) come from their own official product brochures and conditions — flagged per plan where a brochure summarized rather than itemized a figure.</p>' +
           '<p style="margin:0;"><b>Premiums are never estimated here</b> — postal code, date of birth and sex are collected only so you can enter them straight into each insurer\'s own calculator for a binding quote.</p>' +
         '</span>' +
       '</div>'
@@ -1730,7 +1731,9 @@
       return t.tierData.altMed.cap === 0 ? "Not covered" : (t.tierData.altMed.percent + "% up to " + capLabel(t.tierData.altMed.cap));
     });
     bodyRows += row("Glasses / lenses", function(t){
-      return t.tierData.glasses.amount === 0 ? "Not covered" : (chf(t.tierData.glasses.amount) + " / " + t.tierData.glasses.periodYears + "yr" + (t.tierData.glasses.periodYears > 1 ? "s" : ""));
+      if (t.tierData.glasses.amount === 0) return "Not covered";
+      var glassesPrefix = t.tierData.glasses.percent < 100 ? (t.tierData.glasses.percent + "% up to ") : "";
+      return glassesPrefix + chf(t.tierData.glasses.amount) + " / " + t.tierData.glasses.periodYears + "yr" + (t.tierData.glasses.periodYears > 1 ? "s" : "");
     });
     bodyRows += row("Gym / fitness", function(t){
       return t.tierData.gym.cap === 0 ? "Not covered" : (t.tierData.gym.percent + "% up to " + chf(t.tierData.gym.cap) + "/yr");
