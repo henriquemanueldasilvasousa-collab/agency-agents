@@ -803,16 +803,30 @@
     });
   }
 
+  // A bucket requiring an exact insurer x tier x age-band x region match
+  // will sit empty indefinitely until the community has real scale — most
+  // buckets never reach the threshold on their own. Widen progressively
+  // (drop region, then age band too) rather than showing nothing, but
+  // report which level actually matched so the UI can be honest about how
+  // rough the number is.
   function computePreliminary(rows, insurerId, tierLabel, ageBand, region){
-    var matches = rows.filter(function(r){
-      return r.insurerId === insurerId && r.tier === tierLabel && r.ageBand === ageBand && r.region === region;
-    });
-    var premiums = matches.map(function(r){ return parseFloat(r.monthlyPremiumCHF); }).filter(function(n){ return !isNaN(n) && n > 0; });
-    if (premiums.length < PRELIM_THRESHOLD) return null;
-    premiums.sort(function(a, b){ return a - b; });
-    var mid = Math.floor(premiums.length / 2);
-    var median = premiums.length % 2 ? premiums[mid] : (premiums[mid - 1] + premiums[mid]) / 2;
-    return { median: median, count: premiums.length };
+    var levels = [
+      { precision: "exact", test: function(r){ return r.insurerId === insurerId && r.tier === tierLabel && r.ageBand === ageBand && r.region === region; } },
+      { precision: "any-region", test: function(r){ return r.insurerId === insurerId && r.tier === tierLabel && r.ageBand === ageBand; } },
+      { precision: "any-age-region", test: function(r){ return r.insurerId === insurerId && r.tier === tierLabel; } }
+    ];
+    for (var i = 0; i < levels.length; i++){
+      var premiums = rows.filter(levels[i].test)
+        .map(function(r){ return parseFloat(r.monthlyPremiumCHF); })
+        .filter(function(n){ return !isNaN(n) && n > 0; });
+      if (premiums.length >= PRELIM_THRESHOLD){
+        premiums.sort(function(a, b){ return a - b; });
+        var mid = Math.floor(premiums.length / 2);
+        var median = premiums.length % 2 ? premiums[mid] : (premiums[mid - 1] + premiums[mid]) / 2;
+        return { median: median, count: premiums.length, precision: levels[i].precision };
+      }
+    }
+    return null;
   }
 
   /* -------------------------------- state -------------------------------- */
@@ -1150,6 +1164,7 @@
     var m = currentTabMember(3);
     ensureMemberData(m.id);
     var n = state.needs[m.id];
+    var band = ageBand(computeAge(m.birthDate));
 
     var comfortOptions = [
       ["general", "General ward"],
@@ -1202,14 +1217,21 @@
           selectHtml("need-travelFrequency", m.id, travelOptions, n.travelFrequency) +
         '</div>' +
 
-        '<div class="field" style="max-width:280px;">' +
-          '<label id="pregnancy-label-' + m.id + '">Planning a pregnancy in the next year?</label>' +
-          '<div class="toggle-row" role="radiogroup" aria-labelledby="pregnancy-label-' + m.id + '">' +
-            '<div class="toggle-btn ' + (!n.pregnancy ? "active" : "") + '" role="radio" aria-checked="' + (!n.pregnancy) + '" tabindex="0" data-action="need-pregnancy" data-id="' + m.id + '" data-value="false">No</div>' +
-            '<div class="toggle-btn ' + (n.pregnancy ? "active" : "") + '" role="radio" aria-checked="' + n.pregnancy + '" tabindex="0" data-action="need-pregnancy" data-id="' + m.id + '" data-value="true">Yes</div>' +
-          '</div>' +
-          (n.pregnancy ? '<div class="helptext" style="margin-top:8px;">Most plans only pay maternity benefits after a waiting period of about 12 months from when the policy started — the figures below assume that period has already passed. If you\'re switching insurer specifically because of this pregnancy, check the waiting period first; it may not pay out in time.</div>' : "") +
-        '</div>' +
+        (band === "child" ? (
+          '<div class="disclaimer" style="margin-top:8px;">' +
+            '<span class="ico">&#9888;</span>' +
+            '<span>' + esc(m.name || "This household member") + ' is under 18. Some insurers (e.g. Groupe Mutuel\'s Global famille) bundle child-specific benefits like orthodontics and accompanied-hospital-stay cover into a family product — worth checking the "other products" list on the results page rather than relying on this adult-oriented needs questionnaire alone.</span>' +
+          '</div>'
+        ) : (
+          '<div class="field" style="max-width:280px;">' +
+            '<label id="pregnancy-label-' + m.id + '">Planning a pregnancy in the next year?</label>' +
+            '<div class="toggle-row" role="radiogroup" aria-labelledby="pregnancy-label-' + m.id + '">' +
+              '<div class="toggle-btn ' + (!n.pregnancy ? "active" : "") + '" role="radio" aria-checked="' + (!n.pregnancy) + '" tabindex="0" data-action="need-pregnancy" data-id="' + m.id + '" data-value="false">No</div>' +
+              '<div class="toggle-btn ' + (n.pregnancy ? "active" : "") + '" role="radio" aria-checked="' + n.pregnancy + '" tabindex="0" data-action="need-pregnancy" data-id="' + m.id + '" data-value="true">Yes</div>' +
+            '</div>' +
+            (n.pregnancy ? '<div class="helptext" style="margin-top:8px;">Most plans only pay maternity benefits after a waiting period of about 12 months from when the policy started — the figures below assume that period has already passed. If you\'re switching insurer specifically because of this pregnancy, check the waiting period first; it may not pay out in time.</div>' : "") +
+          '</div>'
+        )) +
       '</div>' +
       renderNav()
     );
@@ -1241,9 +1263,11 @@
     html += (
       '<div class="disclaimer">' +
         '<span class="ico">&#9888;</span>' +
-        '<span>Plan names and reimbursement figures for ' + sourcedCount + ' of ' + INSURERS.length + ' insurers (Groupe Mutuel, Helsana, CSS, Sanitas, Swica) come from their own official 2025/26 brochures and conditions — flagged per plan where a brochure summarized rather than itemized a figure. ' +
-        'Atupri has no official documents yet and is marked <b>estimated, unverified</b>. ' +
-        '<b>Premiums are never estimated here</b> — postal code, date of birth and sex are collected only so you can enter them straight into each insurer\'s own calculator for a binding quote.</span>' +
+        '<span>' +
+          '<p style="margin:0 0 8px;">Plan names and reimbursement figures for ' + sourcedCount + ' of ' + INSURERS.length + ' insurers (Groupe Mutuel, Helsana, CSS, Sanitas, Swica) come from their own official 2025/26 brochures and conditions — flagged per plan where a brochure summarized rather than itemized a figure.</p>' +
+          '<p style="margin:0 0 8px;">Atupri has no official documents yet and is marked <b>estimated, unverified</b>.</p>' +
+          '<p style="margin:0;"><b>Premiums are never estimated here</b> — postal code, date of birth and sex are collected only so you can enter them straight into each insurer\'s own calculator for a binding quote.</p>' +
+        '</span>' +
       '</div>'
     );
 
@@ -1553,7 +1577,7 @@
     var reimb = computeReimbursement(state.needs[m.id], tierData);
     var annualPremium = prelim.median * 12;
     return {
-      medianMonthly: prelim.median, count: prelim.count,
+      medianMonthly: prelim.median, count: prelim.count, precision: prelim.precision,
       annualPremium: annualPremium, netAnnual: annualPremium - reimb.total,
       reimbursement: reimb.total, breakdown: reimb.breakdown
     };
@@ -1630,9 +1654,14 @@
       }) : [];
       var communityNet = getCommunityNetCost(m, insurerId, qf.tier, band, region);
       if (communityNet){
+        var precisionNote = communityNet.precision === "any-region"
+          ? " (across all regions — not enough reports for yours specifically yet)"
+          : (communityNet.precision === "any-age-region"
+              ? " (across all ages and regions — not enough reports for yours specifically yet)"
+              : " for this plan, age band and region");
         prelimHtml = (
           '<div class="prelim">' + chf(communityNet.medianMonthly) + '/mo preliminary</div>' +
-          '<div class="helptext">Median of ' + communityNet.count + ' real quotes reported for this plan, age band and region — not an official price.</div>' +
+          '<div class="helptext">Median of ' + communityNet.count + ' real quotes reported' + precisionNote + ' — not an official price.</div>' +
           '<div class="metric-row" style="grid-template-columns:1fr 1fr;margin-top:10px;">' +
             '<div class="metric"><div class="k">Est. annual premium</div><div class="v">' + chf(communityNet.annualPremium) + '</div></div>' +
             '<div class="metric"><div class="k">Est. real net annual cost</div><div class="v" style="color:' + (communityNet.netAnnual <= 0 ? "var(--success)" : "var(--text)") + '">' + chf(communityNet.netAnnual) + '</div></div>' +
