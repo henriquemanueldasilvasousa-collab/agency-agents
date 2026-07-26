@@ -525,6 +525,24 @@
     return "adult";
   }
 
+  // Real Swiss LCA premiums are age-rated far more finely than child/adult/
+  // senior — Groupe Mutuel's own Global smart conditions (GOGA03-E1, Art. 9)
+  // state their actual rating groups as: 0–18, 19–25, then five-year
+  // brackets from 26 to 85, then 86+. Used only for bucketing community-
+  // reported premiums (a finer bucket means a more comparable median);
+  // ageBand() above is unrelated and still drives the pregnancy-question
+  // gating, which only needs the coarser child/adult distinction.
+  function pricingAgeBand(age){
+    if (age === null) return "unknown";
+    if (age <= 18) return "0-18";
+    if (age <= 25) return "19-25";
+    if (age <= 85){
+      var start = 26 + Math.floor((age - 26) / 5) * 5;
+      return start + "-" + (start + 4);
+    }
+    return "86+";
+  }
+
   function chf(n){
     var v = Math.round(n);
     return "CHF " + v.toLocaleString("de-CH");
@@ -890,7 +908,11 @@ var POSTAL_CODE_CANTON = {
 
   function recommendForPerson(member, needs){
     var age = computeAge(member.birthDate);
-    var band = ageBand(age);
+    // This "band" is only ever consumed by the community-pricing bucket
+    // matching (and the results-page age readout) below, both of which
+    // want the finer real-world rating bracket, not the coarse child/
+    // adult/senior split used elsewhere for the pregnancy question.
+    var band = pricingAgeBand(age);
     var candidates = [];
 
     INSURERS.forEach(function(insurer){
@@ -1090,17 +1112,18 @@ var POSTAL_CODE_CANTON = {
     });
   }
 
-  // A bucket requiring an exact insurer x tier x age-band x region match
-  // will sit empty indefinitely until the community has real scale — most
-  // buckets never reach the threshold on their own. Widen progressively
-  // (drop region, then age band too) rather than showing nothing, but
-  // report which level actually matched so the UI can be honest about how
-  // rough the number is.
-  function computePreliminary(rows, insurerId, tierLabel, ageBand, region){
+  // A bucket requiring an exact insurer x tier x canton x age-band x sex
+  // match will sit empty indefinitely until the community has real scale —
+  // most buckets never reach the threshold on their own. Widen
+  // progressively (drop sex, then age band, then canton) rather than
+  // showing nothing, but report which level actually matched so the UI can
+  // be honest about how rough the number is.
+  function computePreliminary(rows, insurerId, tierLabel, ageBand, region, sex){
     var levels = [
-      { precision: "exact", test: function(r){ return r.insurerId === insurerId && r.tier === tierLabel && r.ageBand === ageBand && r.region === region; } },
-      { precision: "any-region", test: function(r){ return r.insurerId === insurerId && r.tier === tierLabel && r.ageBand === ageBand; } },
-      { precision: "any-age-region", test: function(r){ return r.insurerId === insurerId && r.tier === tierLabel; } }
+      { precision: "exact", test: function(r){ return r.insurerId === insurerId && r.tier === tierLabel && r.ageBand === ageBand && r.region === region && r.sex === sex; } },
+      { precision: "any-sex", test: function(r){ return r.insurerId === insurerId && r.tier === tierLabel && r.ageBand === ageBand && r.region === region; } },
+      { precision: "any-age-sex", test: function(r){ return r.insurerId === insurerId && r.tier === tierLabel && r.region === region; } },
+      { precision: "any-region-age-sex", test: function(r){ return r.insurerId === insurerId && r.tier === tierLabel; } }
     ];
     for (var i = 0; i < levels.length; i++){
       var premiums = rows.filter(levels[i].test)
@@ -1872,7 +1895,7 @@ var POSTAL_CODE_CANTON = {
     if (!community || community.status !== "loaded" || !region) return null;
     var tierData = findTierData(insurerId, tierLabel);
     if (!tierData) return null;
-    var prelim = computePreliminary(community.rows, insurerId, tierLabel, band, region);
+    var prelim = computePreliminary(community.rows, insurerId, tierLabel, band, region, m.sex);
     if (!prelim) return null;
     var reimb = computeReimbursement(state.needs[m.id], tierData);
     var annualPremium = prelim.median * 12;
@@ -1950,15 +1973,17 @@ var POSTAL_CODE_CANTON = {
       prelimHtml = '<div class="status-msg err no-print">' + esc(driveErrorMessage(community.errorCode)) + '</div>';
     } else if (community.status === "loaded"){
       var bucketRows = region ? community.rows.filter(function(r){
-        return r.insurerId === insurerId && r.tier === qf.tier && r.ageBand === band && r.region === region;
+        return r.insurerId === insurerId && r.tier === qf.tier && r.ageBand === band && r.region === region && r.sex === m.sex;
       }) : [];
       var communityNet = getCommunityNetCost(m, insurerId, qf.tier, band, region);
       if (communityNet){
-        var precisionNote = communityNet.precision === "any-region"
-          ? " (across all regions — not enough reports for yours specifically yet)"
-          : (communityNet.precision === "any-age-region"
-              ? " (across all ages and regions — not enough reports for yours specifically yet)"
-              : " for this plan, age band and region");
+        var precisionNote = communityNet.precision === "any-sex"
+          ? " (both sexes — not enough reports for yours specifically yet)"
+          : (communityNet.precision === "any-age-sex"
+              ? " (across all ages and sexes — not enough reports for yours specifically yet)"
+              : (communityNet.precision === "any-region-age-sex"
+                  ? " (across all cantons, ages and sexes — not enough reports for yours specifically yet)"
+                  : " for this plan, age band, canton and sex"));
         prelimHtml = (
           '<div class="prelim">' + chf(communityNet.medianMonthly) + '/mo preliminary</div>' +
           '<div class="helptext">Median of ' + communityNet.count + ' real quotes reported' + precisionNote + ' — not an official price.</div>' +
@@ -1968,7 +1993,7 @@ var POSTAL_CODE_CANTON = {
           '</div>'
         );
       } else {
-        prelimHtml = '<div class="helptext no-print">Not enough reported quotes yet for this plan/age/region (' + bucketRows.length + ' so far, need ' + PRELIM_THRESHOLD + ') — report yours below to help build it.</div>';
+        prelimHtml = '<div class="helptext no-print">Not enough reported quotes yet for this plan/age/canton/sex (' + bucketRows.length + ' so far, need ' + PRELIM_THRESHOLD + ') — report yours below to help build it.</div>';
       }
     }
 
@@ -2237,7 +2262,7 @@ var POSTAL_CODE_CANTON = {
         var premiumNum = parseFloat(qf.premium);
         if (!m || !qf.tier || isNaN(premiumNum) || premiumNum <= 0) return;
         var age = computeAge(m.birthDate);
-        var band = ageBand(age);
+        var band = pricingAgeBand(age);
         var region = regionFromPostal(state.household.postalCode);
         qf.status = "saving";
         qf.errorCode = "";
