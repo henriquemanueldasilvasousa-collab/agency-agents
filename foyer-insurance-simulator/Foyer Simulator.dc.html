@@ -465,6 +465,14 @@
     {
       id: "atupri", name: "Atupri", url: "https://www.atupri.ch",
       sourced: true, sourceLabel: "Basic, Mivita (Reala level) and Intense product fact sheets, ed. 2412-04",
+      knownPlanGroups: [
+        { group: "Ambulatoire (une seule choisie)", items: ["Basic", "Mivita", "Intense"] },
+        { group: "Hospitalisation, en complément de Basic/Mivita/Intense", items: ["Comforta Demi-privé", "Comforta Privé", "Comforta Opti"] },
+        { group: "Hospitalisation, sans Basic/Mivita/Intense", items: ["Hôpital Commun", "Hôpital Demi-privé", "Hôpital Privé", "Hôpital Opti"] },
+        { group: "Dentaire", items: ["Denta Niveau 1", "Denta Niveau 2"] },
+        { group: "Voyage & assistance à l'étranger", items: ["Assurance Voyages"] },
+        { group: "Perte de gain / invalidité", items: ["Indemnité journalière LCA", "Indemnité journalière de ménage", "ADI"] }
+      ],
       tiers: [
         { tier: "Basic", planName: "Basic",
           altMed: { percent: 0, cap: 0 },
