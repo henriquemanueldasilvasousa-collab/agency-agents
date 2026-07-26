@@ -344,17 +344,18 @@
         { tier: "Niveau 1", planName: "Global smart Niveau 1",
           altMed: { percent: 30, cap: 20000 },
           glasses: { percent: 100, amount: 150, periodYears: 3 }, gym: { percent: 50, cap: 200 },
-          hospitalComfort: "general", maternity: { amount: 0 }, travel: true, approx: true,
+          hospitalComfort: "general", maternity: { amount: 0 }, approx: true,
           note: "Alternative medicine has no published annual ceiling in the CP — treated as uncapped. Maternity covered as ordinary treatment after a 12-month waiting period, not a fixed payout." },
         { tier: "Niveau 2", planName: "Global smart Niveau 2",
           altMed: { percent: 60, cap: 20000 },
           glasses: { percent: 100, amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
-          hospitalComfort: "general", maternity: { amount: 0 }, travel: true },
+          hospitalComfort: "general", maternity: { amount: 0 }, approx: true,
+          note: "Alternative medicine has no published annual ceiling in the CP, same as Niveau 1 — treated as uncapped." },
         { tier: "Niveau 3", planName: "Global smart Niveau 3",
           altMed: { percent: 90, cap: 20000 },
           glasses: { percent: 100, amount: 200, periodYears: 3 }, gym: { percent: 50, cap: 200 },
-          hospitalComfort: "private", maternity: { amount: 0 }, travel: true,
-          note: "Hospital division is semi-private or private, assured's choice, per the policy." }
+          hospitalComfort: "private", maternity: { amount: 0 }, approx: true,
+          note: "Hospital division is semi-private or private, assured's choice, per the policy. Alternative medicine has no published annual ceiling in the CP, same as Niveau 1 — treated as uncapped." }
       ]
     },
     {
@@ -368,18 +369,18 @@
         { tier: "Essential", planName: "TOP",
           altMed: { percent: 0, cap: 0 },
           glasses: { percent: 90, amount: 150, periodYears: 1 }, gym: { percent: 0, cap: 0 },
-          hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 0 },
           note: "TOP's real focus is orthodontics/eyewear/travel, not alternative medicine or fitness — the brochure doesn't itemize those for TOP. Hospital ward comfort (Helsana's separate HOSPITAL product) isn't in this document set." },
         { tier: "Balanced", planName: "COMPLETA",
           altMed: { percent: 75, cap: 20000 },
           glasses: { percent: 90, amount: 300, periodYears: 1 }, gym: { percent: 75, cap: 200 },
-          hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 500 },
           approx: true,
           note: "The brochure gives 75% reimbursement for outpatient complementary medicine with no explicit annual ceiling — treated as uncapped here. A separate, capped benefit (100% up to CHF 5000/yr) applies only to inpatient complementary-medicine care and isn't counted here. Pregnancy support is a CHF 500/yr sub-cap of the “promotion de la santé” benefit, not a separate maternity payout — this is why the figure below is identical to Premium's. Marked as Helsana's “Topseller” in its own materials." },
         { tier: "Premium", planName: "COMPLETA + COMPLETA PLUS",
           altMed: { percent: 90, cap: 20000 },
           glasses: { percent: 90, amount: 500, periodYears: 1 }, gym: { percent: 75, cap: 400 },
-          hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 500 },
           approx: true,
           note: "COMPLETA PLUS is an add-on sold only in combination with COMPLETA — figures here are the two products' benefits combined. Complementary medicine is genuinely layered (COMPLETA's 75% outpatient reimbursement is uncapped; COMPLETA PLUS adds a further 15% up to CHF 500/yr on top of that) — approximated here as a flat 90%, uncapped. The CHF 500/yr pregnancy sub-cap is the same one COMPLETA already provides; COMPLETA PLUS doesn't add a pregnancy-specific increment, which is why it's identical to Balanced's." }
       ]
@@ -391,19 +392,19 @@
         { tier: "Economy", planName: "myFlex Economy",
           altMed: { percent: 75, cap: 1000 },
           glasses: { percent: 100, amount: 0, periodYears: 1 }, gym: { percent: 50, cap: 300 },
-          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 1000 },
           approx: true,
           note: "myFlex bundles 3 separate products (Ambulatoire, Hospitalisation, Médecine alternative myFlex); this row combines their Economy levels. Hospital ward (general/semi-private/private) isn't tabulated per tier in the brochure — inferred from CSS's own “choose your comfort level” marketing copy." },
         { tier: "Balance", planName: "myFlex Balance",
           altMed: { percent: 75, cap: 3000 },
           glasses: { percent: 100, amount: 150, periodYears: 1 }, gym: { percent: 50, cap: 500 },
-          hospitalComfort: "semi-private", maternity: { amount: 1500 }, travel: true,
+          hospitalComfort: "semi-private", maternity: { amount: 1500 },
           approx: true,
           note: "Hospital ward inferred (see Economy note)." },
         { tier: "Premium", planName: "myFlex Premium",
           altMed: { percent: 75, cap: 10000 },
           glasses: { percent: 100, amount: 300, periodYears: 1 }, gym: { percent: 50, cap: 700 },
-          hospitalComfort: "private", maternity: { amount: 2000 }, travel: true,
+          hospitalComfort: "private", maternity: { amount: 2000 },
           approx: true,
           note: "Hospital ward inferred (see Economy note)." }
       ]
@@ -415,17 +416,17 @@
         { tier: "Basic", planName: "Vital Basic",
           altMed: { percent: 0, cap: 0 },
           glasses: { percent: 100, amount: 300, periodYears: 3 }, gym: { percent: 0, cap: 0 },
-          hospitalComfort: "general", maternity: { amount: 0 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 0 },
           note: "Vital doesn't include a hospital ward upgrade at any tier; that's Sanitas' separate Hospital Extra/Top Liberty product." },
         { tier: "Smart", planName: "Vital Smart",
           altMed: { percent: 80, cap: 5000 },
           glasses: { percent: 100, amount: 300, periodYears: 3 }, gym: { percent: 50, cap: 600 },
-          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 1000 },
           note: "Alt-medicine cap picked from Sanitas' two customer-selectable options (CHF 2500 or 5000). Same hospital-ward caveat as Basic." },
         { tier: "Premium", planName: "Vital Premium",
           altMed: { percent: 80, cap: 10000 },
           glasses: { percent: 100, amount: 600, periodYears: 3 }, gym: { percent: 80, cap: 800 },
-          hospitalComfort: "general", maternity: { amount: 2000 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 2000 },
           note: "Same hospital-ward caveat as Basic." }
       ]
     },
@@ -445,19 +446,19 @@
         { tier: "Top", planName: "COMPLETA TOP",
           altMed: { percent: 100, cap: 1600 },
           glasses: { percent: 100, amount: 200, periodYears: 3 }, gym: { percent: 90, cap: 500 },
-          hospitalComfort: "general", maternity: { amount: 500 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 500 },
           approx: true,
           note: "Swica reimburses alt-medicine as “up to CHF 80/hour” rather than %+annual cap — the figure here approximates a typical ~20 sessions/year. Hospital ward requires Swica's separate Hospita product, not bundled into COMPLETA." },
         { tier: "Forte", planName: "COMPLETA FORTE",
           altMed: { percent: 100, cap: 2400 },
           glasses: { percent: 100, amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
-          hospitalComfort: "general", maternity: { amount: 650 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 650 },
           approx: true,
           note: "Alt-medicine cap approximated the same way as TOP, at Forte's CHF 120/hour rate." },
         { tier: "Forte + Hospita Privée", planName: "COMPLETA FORTE + HOSPITA PRIVÉE",
           altMed: { percent: 100, cap: 2400 },
           glasses: { percent: 100, amount: 900, periodYears: 3 }, gym: { percent: 90, cap: 800 },
-          hospitalComfort: "private", maternity: { amount: 650 }, travel: true,
+          hospitalComfort: "private", maternity: { amount: 650 },
           approx: true,
           note: "Represents COMPLETA FORTE combined with Swica's separate Hospita Privée hospital product, as households commonly buy them together — inherits Forte's approximated alt-medicine cap." }
       ]
@@ -477,18 +478,18 @@
         { tier: "Basic", planName: "Basic",
           altMed: { percent: 0, cap: 0 },
           glasses: { percent: 100, amount: 0, periodYears: 1 }, gym: { percent: 75, cap: 200 },
-          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 1000 },
           note: "Basic's own fact sheet doesn't cover alternative medicine or glasses at all — Mivita or Intense are Atupri's products for that." },
         { tier: "Mivita Reala", planName: "Mivita Reala",
           altMed: { percent: 50, cap: 1500 },
           glasses: { percent: 50, amount: 300, periodYears: 1 }, gym: { percent: 50, cap: 200 },
-          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 1000 },
           approx: true,
           note: "Mivita's benefits are age- and sex-banded, not flat by tier: alt-medicine/glasses/fitness figures here are Mivita's “general benefits,” identical across every age band, but maternity only exists for women aged 13–44 and is really three separate items — CHF 1'000/yr for courses and check-ups (used here), plus CHF 200 for a breastfeeding allowance and CHF 150/day (up to 5 days) for a birth-house stay, neither counted in this figure. Men and the 45+ bands get no Mivita maternity benefit at all." },
         { tier: "Intense", planName: "Intense",
           altMed: { percent: 50, cap: 3000 },
           glasses: { percent: 100, amount: 350, periodYears: 1 }, gym: { percent: 50, cap: 500 },
-          hospitalComfort: "general", maternity: { amount: 1000 }, travel: true,
+          hospitalComfort: "general", maternity: { amount: 1000 },
           note: "Intense's glasses contribution is officially a CHF 350–1'500/yr range depending on whether laser eye surgery is included — CHF 350 (the baseline glasses/lenses figure) is used here." }
       ]
     }
@@ -623,7 +624,6 @@
           insurerId: insurer.id,
           insurerName: insurer.name,
           insurerUrl: insurer.url,
-          insurerSourced: insurer.sourced,
           insurerSourceLabel: insurer.sourceLabel,
           tierIndex: idx,
           tierLabel: tier.tier,
@@ -1266,8 +1266,18 @@
       return { member: m, rec: rec, coverage: state.coverage[m.id] };
     });
 
+    var region = regionFromPostal(h.postalCode);
+    var rankedResults = results.map(function(r){
+      var rk = rankCandidatesForPerson(r.member, r.rec, region);
+      return { result: r, ranked: rk.ranked, anyKnownCost: rk.anyKnownCost };
+    });
+
     var totalReimb = results.reduce(function(sum, r){ return sum + r.rec.best.reimbursement; }, 0);
     var sourcedCount = INSURERS.filter(function(i){ return i.sourced; }).length;
+    var knownCostCount = 0, candidateCount = 0;
+    rankedResults.forEach(function(x){
+      x.ranked.forEach(function(entry){ candidateCount++; if (entry.netCost) knownCostCount++; });
+    });
 
     var html = "";
     html += (
@@ -1291,13 +1301,13 @@
       '<div class="summary-strip">' +
         '<div class="summary-tile"><div class="label">Household members</div><div class="value">' + h.members.length + '</div></div>' +
         '<div class="summary-tile"><div class="label">Est. total annual reimbursement</div><div class="value good">' + chf(totalReimb) + '</div></div>' +
-        '<div class="summary-tile"><div class="label">Insurers officially sourced</div><div class="value">' + sourcedCount + ' / ' + INSURERS.length + '</div></div>' +
+        '<div class="summary-tile"><div class="label">Candidates with a known real cost</div><div class="value">' + knownCostCount + ' / ' + candidateCount + '</div></div>' +
       '</div>'
     );
     html += '</div>';
 
-    results.forEach(function(r){
-      html += renderPersonResult(r);
+    rankedResults.forEach(function(x){
+      html += renderPersonResult(x.result, x.ranked, x.anyKnownCost, region);
     });
 
     html += (
@@ -1313,12 +1323,37 @@
     return html;
   }
 
-  function renderPersonResult(r){
+  // Ranks a person's top-3 candidates by net cost once real pricing is
+  // known for any of them (falling back to match order otherwise). Broken
+  // out of renderPersonResult so renderStep4 can also see which candidates
+  // have a known real cost, for the household-summary tile, without
+  // computing this twice.
+  function rankCandidatesForPerson(m, rec, region){
+    rec.top3.forEach(function(c){ ensureQuoteFormEntry(m.id, c.insurerId, c.tierLabel); });
+    var ranked = rec.top3.map(function(c){
+      return {
+        candidate: c,
+        netCost: getCandidateNetCost(m, c.insurerId, rec.band, region),
+        isOriginalBest: c.insurerId === rec.best.insurerId
+      };
+    });
+    var anyKnownCost = ranked.some(function(x){ return x.netCost; });
+    if (anyKnownCost){
+      ranked.sort(function(a, b){
+        var aKnown = !!a.netCost, bKnown = !!b.netCost;
+        if (aKnown && bKnown) return a.netCost.netAnnual - b.netCost.netAnnual;
+        if (aKnown !== bKnown) return aKnown ? -1 : 1;
+        return 0;
+      });
+    }
+    return { ranked: ranked, anyKnownCost: anyKnownCost };
+  }
+
+  function renderPersonResult(r, ranked, anyKnownCost, region){
     var m = r.member, rec = r.rec, coverage = r.coverage;
     var age = rec.age;
     var ageStr = age === null ? "" : (age + "y · " + rec.band);
     var h = state.household;
-    var region = regionFromPostal(h.postalCode);
 
     var currentAnnualPremium = null;
     if (coverage && coverage.hasComplementary){
@@ -1347,27 +1382,6 @@
           (currentAnnualPremium !== null ? ' (' + chf(currentAnnualPremium) + '/yr)' : '') +
         '</div>'
       );
-    }
-
-    // Every candidate needs a quote-form entry before we can look up its net
-    // cost, since ranking runs before the cards themselves are rendered.
-    rec.top3.forEach(function(c){ ensureQuoteFormEntry(m.id, c.insurerId, c.tierLabel); });
-
-    var ranked = rec.top3.map(function(c){
-      return {
-        candidate: c,
-        netCost: getCandidateNetCost(m, c.insurerId, rec.band, region),
-        isOriginalBest: c.insurerId === rec.best.insurerId
-      };
-    });
-    var anyKnownCost = ranked.some(function(x){ return x.netCost; });
-    if (anyKnownCost){
-      ranked.sort(function(a, b){
-        var aKnown = !!a.netCost, bKnown = !!b.netCost;
-        if (aKnown && bKnown) return a.netCost.netAnnual - b.netCost.netAnnual;
-        if (aKnown !== bKnown) return aKnown ? -1 : 1;
-        return 0;
-      });
     }
 
     var tagLabel = anyKnownCost ? "BEST VALUE" : "BEST MATCH";
@@ -1465,11 +1479,11 @@
         }).join("") + '</div>'
       : '<div class="helptext" style="margin:10px 0;">No specific ambulatory needs entered — this reflects a baseline match.</div>';
 
-    var sourceNote = candidate.insurerSourced
-      ? '<span class="helptext">Sourced from ' + esc(candidate.insurerSourceLabel) + '.' +
-        (candidate.tierData.approx ? ' <span class="approx-badge" title="This plan has one or more figures that had to be approximated from the source documents rather than read off directly — see full plan details below.">~ figure approximated</span>' : "") +
-        '</span>'
-      : '<span class="helptext" style="color:var(--warn);">Estimated, unverified — ' + esc(candidate.insurerSourceLabel) + '</span>';
+    var sourceNote = (
+      '<span class="helptext">Sourced from ' + esc(candidate.insurerSourceLabel) + '.' +
+      (candidate.tierData.approx ? ' <span class="approx-badge" title="This plan has one or more figures that had to be approximated from the source documents rather than read off directly — see full plan details below.">~ figure approximated</span>' : "") +
+      '</span>'
+    );
 
     var mismatchHtml = "";
     if (!candidate.passes){
@@ -1479,17 +1493,6 @@
           '<span class="ico">&#9888;</span>' +
           '<span>This plan doesn\'t cover a ' + esc(memberNeeds.comfortPref) + ' ward' +
           '. You\'d likely need to combine it with a separate hospital-comfort upgrade to get full coverage.</span>' +
-        '</div>'
-      );
-    }
-
-    var unsourcedTopHtml = "";
-    if (idx === 0 && !candidate.insurerSourced){
-      unsourcedTopHtml = (
-        '<div class="disclaimer" style="margin-bottom:14px;">' +
-          '<span class="ico">&#9888;</span>' +
-          '<span><b>This top result is an unverified estimate</b>, not a figure from ' + esc(candidate.insurerName) + '\'s own documents — ' +
-          esc(candidate.insurerSourceLabel) + '. Treat it as a placeholder and confirm directly with ' + esc(candidate.insurerName) + ' before deciding.</span>' +
         '</div>'
       );
     }
@@ -1506,11 +1509,10 @@
       '<div class="candidate-card">' +
         '<div class="person-result-head">' +
           '<span class="rank-pill">' + rankLabel + '</span>' +
-          '<div class="rec-badge">' + esc(candidate.insurerName) + ' — ' + esc(candidate.planName) + (candidate.insurerSourced ? "" : " (estimated)") + '</div>' +
+          '<div class="rec-badge">' + esc(candidate.insurerName) + ' — ' + esc(candidate.planName) + '</div>' +
         '</div>' +
 
         originalBestNote +
-        unsourcedTopHtml +
         mismatchHtml +
 
         '<div class="metric-row" style="grid-template-columns:' + (netCost && netCost.source === "yours" ? "1fr 1fr" : "1fr") + ';">' +
@@ -1711,6 +1713,13 @@
     );
   }
 
+  // Tiers with no real published alt-medicine ceiling use cap:20000 in
+  // INSURERS as a sentinel for "uncapped" (GM's three Global smart tiers,
+  // Helsana's COMPLETA/COMPLETA PLUS) rather than a real sourced number.
+  // 15000 sits comfortably between that sentinel and every other insurer's
+  // actual highest cap (CSS/Sanitas Premium at 10000) — if a future tier
+  // gets a genuine sourced cap at or above 15000, raise this threshold (or
+  // the sentinel value) so it isn't mislabeled as uncapped.
   function capLabel(cap){
     return cap >= 15000 ? "no published annual cap" : (chf(cap) + "/yr");
   }
@@ -1750,10 +1759,11 @@
       return COMFORT_LABEL[t.tierData.hospitalComfort];
     });
     bodyRows += row("Maternity", function(t){
-      return t.tierData.maternity.amount > 0 ? chf(t.tierData.maternity.amount) + " lump sum" : "Covered as ordinary treatment";
-    });
-    bodyRows += row("Travel / emergency abroad", function(t){
-      return t.tierData.travel ? "Included" : "—";
+      // Not always a real lump sum — Helsana's is a recurring annual
+      // sub-cap and Atupri Mivita's is a composite of several benefits
+      // (see each plan's own note for the real structure); "up to" stays
+      // accurate for all of them without overclaiming a payout structure.
+      return t.tierData.maternity.amount > 0 ? "Up to " + chf(t.tierData.maternity.amount) : "Covered as ordinary treatment";
     });
 
     return { headerCells: headerCells, bodyRows: bodyRows };
